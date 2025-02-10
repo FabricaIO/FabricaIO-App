@@ -28,12 +28,21 @@
           </q-tab-panel>
           <q-tab-panel name="parameters">
             <q-input
-              ref="inputRef"
               class="my-input"
               :model-value="device.name"
               @update:model-value="(val) => updateName(device.name, val?.toString() || '')"
               debounce="500"
               label="Device Name"
+              outlined
+              dense
+            />
+            <q-input
+              v-for="parameter in device.constructor"
+              class="my-input"
+              :key="parameter.name"
+              type="text"
+              v-model="parameter.default"
+              :label="parameter.name"
               outlined
               dense
             />
@@ -61,7 +70,7 @@ watchEffect(() => {
 })
 
 // Assign class to cards based on device type
-const getCardClass = (type: deviceTypes) => {
+const getCardClass = (type: deviceTypes): string => {
   switch (type) {
     case deviceTypes.Actor:
       return 'bg-primary'

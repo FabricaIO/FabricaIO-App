@@ -17,15 +17,29 @@
 <script setup lang="ts">
 import { addDevice } from '../composables/projectState'
 
+// Description of a device
 export interface FabricaIODeviceProps {
   name: string
-  description: string
-  repo: string
   type: deviceTypes
+  category: string
+  libname: string
+  includes: string[]
+  description: string
+  constructor: parameter[]
+  repo: string
+}
+
+// Description of a parameter for a device
+export interface parameter {
+  name: string
+  type: string
+  description: string
+  default: string
 }
 
 const props = withDefaults(defineProps<FabricaIODeviceProps>(), {})
 
+// Used for styling based on device type
 const getCardClass = (type: deviceTypes) => {
   switch (type) {
     case deviceTypes.Actor:
@@ -39,6 +53,7 @@ const getCardClass = (type: deviceTypes) => {
 </script>
 
 <script lang="ts">
+// Available device types
 export enum deviceTypes {
   Actor,
   Sensor,
