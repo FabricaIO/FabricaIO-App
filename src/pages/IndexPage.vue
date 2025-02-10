@@ -28,8 +28,10 @@
           </q-tab-panel>
           <q-tab-panel name="parameters">
             <q-input
+              ref="inputRef"
               class="my-input"
-              v-model="device.name"
+              :model-value="device.name"
+              @update:model-value="(val) => updateName(device.name, val?.toString() || '')"
               debounce="500"
               label="Device Name"
               outlined
@@ -45,7 +47,6 @@
 <script setup lang="ts">
 import { reactive, watchEffect } from 'vue'
 import { current_project, removeDevice } from '../composables/projectState'
-import type { FabricaIODeviceProps } from '../components/FabricaIODevice.vue'
 import { deviceTypes } from '../components/FabricaIODevice.vue'
 
 const tabs = reactive<{ [key: string]: string }>({})
@@ -59,6 +60,7 @@ watchEffect(() => {
   })
 })
 
+// Assign class to cards based on device type
 const getCardClass = (type: deviceTypes) => {
   switch (type) {
     case deviceTypes.Actor:
@@ -67,6 +69,18 @@ const getCardClass = (type: deviceTypes) => {
       return 'bg-secondary'
     default:
       return 'bg-default'
+  }
+}
+
+// Checks if a device name already exists in the project
+const updateName = (oldName: string, newName: string) => {
+  if (current_project.value.devices.some((device) => device.name === newName)) {
+    alert(`Device with name "${newName}" already exists.`)
+    return
+  }
+  const device = current_project.value.devices.find((device) => device.name === oldName)
+  if (device) {
+    device.name = newName
   }
 }
 </script>
