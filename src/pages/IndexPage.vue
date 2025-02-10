@@ -39,7 +39,7 @@
             <q-input
               v-for="parameter in device.constructor"
               class="my-input"
-              :key="parameter.name"
+              :key="device.name + parameter.name"
               type="text"
               v-model="parameter.default"
               :label="parameter.name"

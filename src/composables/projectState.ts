@@ -1,5 +1,6 @@
 import type { FabricaIODeviceProps } from 'src/components/FabricaIODevice.vue'
 import { ref } from 'vue'
+import { extend } from 'quasar'
 
 // Describes a project
 interface Project {
@@ -21,7 +22,8 @@ const addDevice = (device: FabricaIODeviceProps) => {
     (existingDevice) => existingDevice.name === device.name,
   )
   if (!deviceExists) {
-    current_project.value.devices.push({ ...device })
+    // Create a deep copy to ensure devices are independent
+    current_project.value.devices.push(extend(true, {}, device))
   } else {
     alert(`Device with name "${device.name}" already exists.`)
   }
