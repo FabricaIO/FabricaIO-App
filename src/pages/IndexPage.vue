@@ -66,9 +66,9 @@ const tabs = reactive<{ [key: string]: string }>({})
 let project_dir = ''
 
 const getProjectDir = async () => {
-  const result = await window.helpers.getProjectDir()
+  const result = await window.fileops.getProjectDir()
   if (!result.canceled) {
-    project_dir = result.filePaths[0]
+    project_dir = result.filePaths[0] || ''
     console.log('Selected file paths:', project_dir)
   } else {
     console.log('No file selected')

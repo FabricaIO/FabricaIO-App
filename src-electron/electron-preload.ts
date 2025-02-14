@@ -30,6 +30,6 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 
-contextBridge.exposeInMainWorld('helpers', {
+contextBridge.exposeInMainWorld('fileops', {
   getProjectDir: () => ipcRenderer.invoke('open-directory-dialog'),
 })
