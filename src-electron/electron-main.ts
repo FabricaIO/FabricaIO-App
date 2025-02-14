@@ -3,6 +3,7 @@ import path from 'path'
 import os from 'os'
 import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
+import fs from 'fs/promises'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -73,8 +74,8 @@ app.on('activate', () => {
   }
 })
 
-// Handle IPC event for opening directory dialog
-ipcMain.handle('open-directory-dialog', async () => {
+// Handle IPC events for file operations
+ipcMain.handle('open-directory-dialog', async (): Promise<Electron.OpenDialogReturnValue> => {
   if (mainWindow) {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
@@ -83,3 +84,32 @@ ipcMain.handle('open-directory-dialog', async () => {
   }
   return { canceled: true, filePaths: [] }
 })
+
+ipcMain.handle('file-exists', async (event, data: string): Promise<boolean> => {
+  try {
+    await fs.access(path.normalize(data))
+    return true
+  } catch {
+    return false
+  }
+})
+
+ipcMain.handle('read-file', async (event, data: string): Promise<string> => {
+  try {
+    return (await fs.readFile(path.normalize(data))).toString('utf-8')
+  } catch {
+    return ''
+  }
+})
+
+ipcMain.handle(
+  'write-file',
+  async (event, data: { path: string; content: string }): Promise<boolean> => {
+    try {
+      await fs.writeFile(path.normalize(data.path), data.content, { flag: 'w+' })
+      return true
+    } catch {
+      return false
+    }
+  },
+)

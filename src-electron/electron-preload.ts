@@ -32,7 +32,12 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { BrowserWindow } from '@electron/remote'
 
 contextBridge.exposeInMainWorld('fileops', {
-  getProjectDir: () => ipcRenderer.invoke('open-directory-dialog'),
+  getProjectDir: (): Promise<Electron.OpenDialogReturnValue> =>
+    ipcRenderer.invoke('open-directory-dialog'),
+  fileExists: (path: string): Promise<string> => ipcRenderer.invoke('file-exists', path),
+  writeFile: (path: string, content: string): Promise<boolean> =>
+    ipcRenderer.invoke('write-file', { path, content }),
+  readFile: (path: string): Promise<string> => ipcRenderer.invoke('read-file', path),
 })
 
 contextBridge.exposeInMainWorld('myWindowAPI', {

@@ -25,12 +25,17 @@
         File
         <q-menu>
           <q-list dense style="min-width: 100px">
-            <q-item clickable v-close-popup @click="getProjectDir">
+            <q-item clickable v-close-popup @click="loadProjectDir">
               <q-item-section>Open Project Directory</q-item-section>
             </q-item>
-
             <q-separator />
-
+            <q-item clickable v-close-popup @click="exportProject">
+              <q-item-section>Save Project</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup>
+              <q-item-section>Load Project</q-item-section>
+            </q-item>
+            <q-separator />
             <q-item clickable v-close-popup @click="closeApp">
               <q-item-section>Quit</q-item-section>
             </q-item>
@@ -42,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { setProjectDir } from 'src/composables/projectState'
+import { setProjectDir, getProjectDir, current_project } from 'src/composables/projectState'
 
 defineProps<{
   leftDrawerOpen: boolean
@@ -64,12 +69,20 @@ const closeApp = () => {
   window.myWindowAPI?.close()
 }
 
-const getProjectDir = async () => {
+const loadProjectDir = async () => {
   const result = await window.fileops.getProjectDir()
   if (!result.canceled) {
     setProjectDir(result.filePaths[0] || '')
   } else {
     console.log('No file selected')
   }
+}
+
+const exportProject = async () => {
+  console.log(current_project.value)
+  window.fileops.writeFile(
+    getProjectDir() + '/fabricaio.json',
+    JSON.stringify(current_project.value),
+  )
 }
 </script>
