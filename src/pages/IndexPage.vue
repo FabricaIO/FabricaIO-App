@@ -1,5 +1,8 @@
 <template>
   <q-page class="flex flex-center">
+    <div class="q-pa-md">
+      <q-btn @click="getProjectDir()" label="Select Project Directory" color="primary" />
+    </div>
     <div id="project" class="q-pa-md row items-start q-gutter-md">
       <q-card
         v-for="device in current_project.devices"
@@ -59,6 +62,18 @@ import { current_project, removeDevice } from '../composables/projectState'
 import { deviceTypes } from '../components/FabricaIODevice.vue'
 
 const tabs = reactive<{ [key: string]: string }>({})
+
+let project_dir = ''
+
+const getProjectDir = async () => {
+  const result = await window.helpers.getProjectDir()
+  if (!result.canceled) {
+    project_dir = result.filePaths[0]
+    console.log('Selected file paths:', project_dir)
+  } else {
+    console.log('No file selected')
+  }
+}
 
 // Watch for changes in current_project.devices and set default tab state
 watchEffect(() => {

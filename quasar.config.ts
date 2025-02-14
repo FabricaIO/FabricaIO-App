@@ -183,7 +183,7 @@ export default defineConfig((/* ctx */) => {
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
         // OS X / Mac App Store
-        // appBundleId: '',
+        appBundleId: 'fabricaio-app',
         // appCategoryType: '',
         // osxSign: '',
         // protocol: 'myapp://path',
@@ -193,8 +193,10 @@ export default defineConfig((/* ctx */) => {
 
       builder: {
         // https://www.electron.build/configuration/configuration
-
         appId: 'fabricaio-app',
+        win: {
+          target: 'nsis',
+        },
       },
     },
 

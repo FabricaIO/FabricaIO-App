@@ -27,3 +27,9 @@
  *   }
  * }
  */
+
+import { contextBridge, ipcRenderer } from 'electron'
+
+contextBridge.exposeInMainWorld('helpers', {
+  getProjectDir: () => ipcRenderer.invoke('open-directory-dialog'),
+})
