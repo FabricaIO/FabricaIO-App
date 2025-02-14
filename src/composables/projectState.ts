@@ -2,6 +2,9 @@ import type { FabricaIODeviceProps } from 'src/components/FabricaIODevice.vue'
 import { ref } from 'vue'
 import { extend } from 'quasar'
 
+// Project directory
+let project_dir = ''
+
 // Describes a project
 interface Project {
   devices: FabricaIODeviceProps[]
@@ -15,6 +18,16 @@ const current_project = ref<Project>({
   board: 'dfrobot_firebeetle2_esp32e',
   lib_deps: [],
 })
+
+// Sets project directory
+const setProjectDir = (dir: string) => {
+  project_dir = dir
+}
+
+// Gets current project dir
+const getProjectDir = (): string => {
+  return project_dir
+}
 
 // Adds a device to the current project
 const addDevice = (device: FabricaIODeviceProps) => {
@@ -36,4 +49,4 @@ const removeDevice = (name: string) => {
   )
 }
 
-export { current_project, addDevice, removeDevice }
+export { getProjectDir, setProjectDir, current_project, addDevice, removeDevice }

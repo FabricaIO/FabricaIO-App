@@ -1,11 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
-        <q-toolbar-title> FabricaIO Project Builder </q-toolbar-title>
-      </q-toolbar>
-    </q-header>
+    <MenuBar :leftDrawerOpen="leftDrawerOpen" @toggle-left-drawer="toggleLeftDrawer" />
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
         <q-item-label header> Devices </q-item-label>
@@ -22,7 +17,7 @@
 import { ref } from 'vue'
 import type { deviceTypes } from 'components/FabricaIODevice.vue'
 import FabricaIODevice, { type FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
-
+import MenuBar from 'components/MenuBar.vue'
 // List of available devices (temporarily hand coded, will be dynamically loaded)
 const devicesList: FabricaIODeviceProps[] = [
   {

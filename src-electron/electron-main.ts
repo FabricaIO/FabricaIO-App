@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import path from 'path'
 import os from 'os'
 import { fileURLToPath } from 'url'
-import { enable } from '@electron/remote/main/index.js'
+import { initialize, enable } from '@electron/remote/main/index.js'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -10,6 +10,8 @@ const platform = process.platform || os.platform()
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 let mainWindow: BrowserWindow | undefined
+
+initialize()
 
 function createWindow() {
   /**
@@ -20,6 +22,7 @@ function createWindow() {
     width: 1000,
     height: 600,
     useContentSize: true,
+    frame: false,
     webPreferences: {
       contextIsolation: true,
       sandbox: false,
