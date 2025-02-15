@@ -22,7 +22,7 @@
         @click="$emit('toggle-left-drawer')"
       />
       <div class="cursor-pointer non-selectable">
-        File
+        Project
         <q-menu>
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup @click="loadProjectDir">
@@ -108,12 +108,15 @@ const buildProject = async () => {
     alert('No project directory selected')
     return
   }
+  const libs_array = [] as string[]
+  const includes_array = [] as string[]
   let constructors = ''
   let devices = ''
   let receivers = ''
   let libs = ''
   let includes = ''
   let first = true
+
   current_project.value.devices.forEach((device) => {
     if (!first) {
       constructors += '\t\t'
@@ -123,11 +126,19 @@ const buildProject = async () => {
     } else {
       first = false
     }
-    includes += buildIncludes(device)
+    const lib_buff = buildLibs(device)
+    const include_buff = buildIncludes(device)
+    if (!libs_array.includes(lib_buff)) {
+      libs += lib_buff + '\n'
+      libs_array.push(lib_buff)
+    }
+    if (!includes_array.includes(include_buff)) {
+      includes += include_buff + '\n'
+      includes_array.push(include_buff)
+    }
     constructors += buildConstructors(device) + '\n'
     receivers += buildReceiverLoaders(device) + '\n'
     devices += buildDeviceLoaders(device) + '\n'
-    libs += buildLibs(device) + '\n'
   })
   if (await window.fileops.makeDir(getProjectDir() + '/lib/DeviceLoader/src/')) {
     writeDeviceLoaderh(includes, constructors)
@@ -149,13 +160,13 @@ const buildProject = async () => {
 const buildConstructors = (device: FabricaIODeviceProps): string => {
   let constructor = device.libname + ' ' + device.name.replaceAll(' ', '') + '{'
   let first = true
-  device.constructor.forEach((param) => {
+  device.constructor[device.constructor_used]?.forEach((param) => {
     if (first) {
       first = false
     } else {
       constructor += ', '
     }
-    if (param.type === 'String') {
+    if (param.type === 'String' || param.type == 'string') {
       constructor += '"' + param.default + '"'
     } else {
       constructor += param.default

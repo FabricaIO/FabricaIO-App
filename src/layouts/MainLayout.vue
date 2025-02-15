@@ -28,19 +28,22 @@ const devicesList: FabricaIODeviceProps[] = [
     includes: ['DFMultiEnvironmental'],
     description: 'A sensor that measures temperature, humidity, and ambient light',
     constructor: [
-      {
-        name: 'I2C_bus',
-        type: 'TwoWire*',
-        description: 'The I2C bus the sensor is connected to',
-        default: '&Wire',
-      },
-      {
-        name: 'address',
-        type: 'uint8_t',
-        description: 'The I2C address of the sensor',
-        default: '0x22',
-      },
+      [
+        {
+          name: 'I2C_bus',
+          type: 'TwoWire*',
+          description: 'The I2C bus the sensor is connected to',
+          default: '&Wire',
+        },
+        {
+          name: 'address',
+          type: 'uint8_t',
+          description: 'The I2C address of the sensor',
+          default: '0x22',
+        },
+      ],
     ],
+    constructor_used: 0,
     repo: 'https://github.com/FabricaIO/sensor-DFMultiEnvironmental',
   },
   {
@@ -51,20 +54,69 @@ const devicesList: FabricaIODeviceProps[] = [
     includes: ['DFPeristalticPump'],
     description: 'A pump for precise dosages controlled by servo library',
     constructor: [
-      {
-        name: 'Pin',
-        type: 'int',
-        description: 'The pin to use',
-        default: '',
-      },
-      {
-        name: 'Configfile',
-        type: 'String',
-        description: 'The file name to store settings in',
-        default: 'DFPump.json',
-      },
+      [
+        {
+          name: 'Pin',
+          type: 'int',
+          description: 'The pin to use',
+          default: '',
+        },
+        {
+          name: 'Configfile',
+          type: 'String',
+          description: 'The file name to store settings in',
+          default: 'DFPump.json',
+        },
+      ],
     ],
+    constructor_used: 0,
     repo: 'https://github.com/FabricaIO/actor-DFPeristalticPump',
+  },
+  {
+    name: 'PMSX003AirQuality',
+    type: 0 as deviceTypes,
+    category: 'Air Aquality',
+    libname: 'PlantowerPMSx003',
+    includes: ['PlantowerPMSx003'],
+    description: 'A pump for precise dosages controlled by servo library',
+    constructor: [
+      [
+        {
+          name: 'SerialPort',
+          type: 'HardwareSerial*',
+          description: 'The serial port to use',
+          default: '',
+        },
+        {
+          name: 'RX_Pin',
+          type: 'int',
+          description: 'The RX pin to use',
+          default: '16',
+        },
+        {
+          name: 'TX_Pin',
+          type: 'int',
+          description: 'The TX pin to use',
+          default: '17',
+        },
+      ],
+      [
+        {
+          name: 'RX_Pin',
+          type: 'int',
+          description: 'The RX pin to use',
+          default: '',
+        },
+        {
+          name: 'TX_Pin',
+          type: 'int',
+          description: 'The TX pin to use',
+          default: '',
+        },
+      ],
+    ],
+    constructor_used: 0,
+    repo: 'https://github.com/FabricaIO/sensor-PlantowerPMSx003.git',
   },
 ]
 

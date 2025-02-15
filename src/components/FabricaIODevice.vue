@@ -25,7 +25,8 @@ export interface FabricaIODeviceProps {
   libname: string
   includes: string[]
   description: string
-  constructor: parameter[]
+  constructor: parameter[][]
+  constructor_used: number
   repo: string
 }
 

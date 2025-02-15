@@ -12,7 +12,12 @@
         </q-card-section>
         <q-tabs v-model="tabs[device.name]">
           <q-tab label="Details" name="details" />
-          <q-tab label="Parameters" name="parameters" />
+          <q-tab
+            v-for="(overload, index) in device.constructor"
+            :key="'tab' + index"
+            :label="'Parameters ' + (index + 1)"
+            :name="'parameters' + index"
+          />
         </q-tabs>
         <q-separator dark />
         <q-tab-panels :class="getCardClass(device.type)" v-model="tabs[device.name]" animated>
@@ -26,7 +31,21 @@
               <q-btn @click="openRepo(device.repo)" flat> Repository </q-btn>
             </q-card-actions>
           </q-tab-panel>
-          <q-tab-panel name="parameters">
+          <q-tab-panel
+            v-for="(overload, index) in device.constructor"
+            v-bind:key="'param' + String(index)"
+            :name="'parameters' + String(index)"
+          >
+            <q-radio
+              :key="'constructor_sel_' + index"
+              v-model="device.constructor_used"
+              :val="index"
+              label="Use this constructor"
+              outlined
+              keep-color
+              color="white"
+              class="myRadio"
+            />
             <q-input
               class="my-input"
               :model-value="device.name"
@@ -37,9 +56,9 @@
               dense
             />
             <q-input
-              v-for="parameter in device.constructor"
+              v-for="parameter in overload"
               class="my-input"
-              :key="device.name + parameter.name"
+              :key="device.name + parameter.name + index"
               type="text"
               v-model="parameter.default"
               :label="parameter.name"
