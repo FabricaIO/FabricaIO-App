@@ -8,7 +8,7 @@
       <q-separator dark />
       <q-card-actions>
         <q-btn class="add-device" @click="addDevice(props)">Add to Project</q-btn>
-        <q-btn v-bind:href="repo" target="_blank" flat> Repository </q-btn>
+        <q-btn @click="openRepo(repo)" flat> Repository </q-btn>
       </q-card-actions>
     </q-card>
   </div>
@@ -50,12 +50,19 @@ const getCardClass = (type: deviceTypes) => {
       return 'bg-default'
   }
 }
+
+// Opens URL in external browser
+const openRepo = (url: string) => {
+  window.myWindowAPI.openExternal(url)
+}
 </script>
 
 <script lang="ts">
 // Available device types
 export enum deviceTypes {
-  Actor,
   Sensor,
+  Actor,
+  LogReceiver,
+  EventReceiver,
 }
 </script>

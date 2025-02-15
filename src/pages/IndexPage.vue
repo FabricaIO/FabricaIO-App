@@ -23,7 +23,7 @@
             <q-separator dark />
             <q-card-actions>
               <q-btn @click="removeDevice(device.name)"> Remove Device </q-btn>
-              <q-btn v-bind:href="device.repo" target="_blank" flat> Repository </q-btn>
+              <q-btn @click="openRepo(device.repo)" flat> Repository </q-btn>
             </q-card-actions>
           </q-tab-panel>
           <q-tab-panel name="parameters">
@@ -79,6 +79,11 @@ const getCardClass = (type: deviceTypes): string => {
     default:
       return 'bg-default'
   }
+}
+
+// Opens a URL in the external browser
+const openRepo = (url: string) => {
+  window.myWindowAPI.openExternal(url)
 }
 
 // Checks if a device name already exists in the project

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import path from 'path'
 import os from 'os'
 import { fileURLToPath } from 'url'
@@ -74,6 +74,11 @@ app.on('activate', () => {
   }
 })
 
+// IPC for opening an external URL
+ipcMain.handle('open-external', async (event, data: string) => {
+  shell.openExternal(data)
+})
+
 // Handle IPC events for file operations
 ipcMain.handle('open-directory-dialog', async (): Promise<Electron.OpenDialogReturnValue> => {
   if (mainWindow) {
@@ -113,3 +118,12 @@ ipcMain.handle(
     }
   },
 )
+
+ipcMain.handle('make-dir', async (event, data: string): Promise<boolean> => {
+  try {
+    await fs.mkdir(path.normalize(data), { recursive: true })
+    return true
+  } catch {
+    return false
+  }
+})

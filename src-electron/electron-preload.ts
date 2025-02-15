@@ -31,20 +31,22 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { BrowserWindow } from '@electron/remote'
 
+// Expose IPC functions to JavaScript
+
 contextBridge.exposeInMainWorld('fileops', {
   getProjectDir: (): Promise<Electron.OpenDialogReturnValue> =>
     ipcRenderer.invoke('open-directory-dialog'),
   fileExists: (path: string): Promise<string> => ipcRenderer.invoke('file-exists', path),
+  readFile: (path: string): Promise<string> => ipcRenderer.invoke('read-file', path),
   writeFile: (path: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke('write-file', { path, content }),
-  readFile: (path: string): Promise<string> => ipcRenderer.invoke('read-file', path),
+  makeDir: (path: string): Promise<boolean> => ipcRenderer.invoke('make-dir', path),
 })
 
 contextBridge.exposeInMainWorld('myWindowAPI', {
   minimize() {
     BrowserWindow.getFocusedWindow()?.minimize()
   },
-
   toggleMaximize() {
     const win = BrowserWindow.getFocusedWindow()
 
@@ -54,8 +56,8 @@ contextBridge.exposeInMainWorld('myWindowAPI', {
       win?.maximize()
     }
   },
-
   close() {
     BrowserWindow.getFocusedWindow()?.close()
   },
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 })

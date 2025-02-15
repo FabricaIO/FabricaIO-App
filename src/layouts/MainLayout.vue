@@ -53,7 +53,7 @@ const devicesList: FabricaIODeviceProps[] = [
     constructor: [
       {
         name: 'Pin',
-        type: 'int*',
+        type: 'int',
         description: 'The pin to use',
         default: '',
       },
