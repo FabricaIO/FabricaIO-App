@@ -22,26 +22,41 @@
         @click="$emit('toggle-left-drawer')"
       />
       <div class="cursor-pointer non-selectable">
+        <q-icon name="computer" />
         Project
         <q-menu>
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup @click="loadProjectDir">
+              <q-item-section side class="menu-icon">
+                <q-icon name="folder_open" />
+              </q-item-section>
               <q-item-section>Open Project Directory</q-item-section>
             </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="exportProject">
+              <q-item-section side class="menu-icon">
+                <q-icon name="save" />
+              </q-item-section>
               <q-item-section>Save Project</q-item-section>
             </q-item>
-            <q-item clickable v-close-popup>
+            <q-item clickable v-close-popup @click="importProject">
+              <q-item-section side class="menu-icon">
+                <q-icon name="upload_file" />
+              </q-item-section>
               <q-item-section>Load Project</q-item-section>
             </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="closeApp">
+              <q-item-section side class="menu-icon">
+                <q-icon name="close" />
+              </q-item-section>
               <q-item-section>Quit</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
       </div>
+      <q-separator vertical spaced color="white" />
+      <q-item-section>Current project folder: {{ folderText }}</q-item-section>
       <q-space />
       <q-btn
         on-left
@@ -58,10 +73,19 @@
 </template>
 
 <script setup lang="ts">
-import { setProjectDir, getProjectDir, current_project } from 'src/composables/projectState'
+import {
+  setProjectDir,
+  getProjectDir,
+  current_project,
+  loadProject,
+} from 'src/composables/projectState'
 import 'components/FabricaIODevice.vue'
 import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
+import { ref } from 'vue'
+
+// Text for current project directory
+const folderText = ref('None selected')
 
 defineProps<{
   leftDrawerOpen: boolean
@@ -88,6 +112,7 @@ const loadProjectDir = async () => {
   const result = await window.fileops.getProjectDir()
   if (!result.canceled) {
     setProjectDir(result.filePaths[0] || '')
+    folderText.value = result.filePaths[0] || 'None selected'
   } else {
     console.log('No file selected')
   }
@@ -95,11 +120,22 @@ const loadProjectDir = async () => {
 
 // Exports a project as a JSON
 const exportProject = async () => {
-  console.log(current_project.value)
+  if (getProjectDir() === '') {
+    alert('No project directory selected')
+    return
+  }
   window.fileops.writeFile(
     getProjectDir() + '/fabricaio.json',
     JSON.stringify(current_project.value),
   )
+}
+
+const importProject = async () => {
+  if (getProjectDir() === '') {
+    alert('No project directory selected')
+    return
+  }
+  loadProject(await window.fileops.readFile(getProjectDir() + '/fabricaio.json'))
 }
 
 // Builds a project by creating the necessary source files from the current project
@@ -272,3 +308,8 @@ const boards = {
   esp32doit_devkit_v1: '[env:esp32doit-devkit-v1]\nboard = esp32doit-devkit-v1',
 }
 </script>
+
+<style lang="sass" scoped>
+.menu-icon
+  padding-right: 3px
+</style>

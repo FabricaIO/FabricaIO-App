@@ -49,4 +49,18 @@ const removeDevice = (name: string) => {
   )
 }
 
-export { getProjectDir, setProjectDir, current_project, addDevice, removeDevice }
+// Loads a project
+const loadProject = (project: string): boolean => {
+  let loadedProject
+  try {
+    loadedProject = JSON.parse(project) as Project
+  } catch {
+    console.log('Could not parse project file. Content received:\n')
+    console.log(project)
+    return false
+  }
+  current_project.value = extend(true, {}, loadedProject)
+  return true
+}
+
+export { getProjectDir, setProjectDir, current_project, addDevice, removeDevice, loadProject }

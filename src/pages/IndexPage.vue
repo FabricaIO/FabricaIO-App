@@ -44,7 +44,6 @@
               outlined
               keep-color
               color="white"
-              class="myRadio"
             />
             <q-input
               class="my-input"
