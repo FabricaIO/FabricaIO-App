@@ -19,7 +19,7 @@
         icon="menu"
         style="margin-right: 0.5em"
         aria-label="Menu"
-        @click="$emit('toggle-left-drawer')"
+        @click="emit('toggle-left-drawer')"
       />
       <div class="cursor-pointer non-selectable">
         <q-icon name="computer" />
@@ -46,6 +46,15 @@
               <q-item-section>Load Project</q-item-section>
             </q-item>
             <q-separator />
+            <q-item clickable v-close-popup @click="openBoardDialog">
+              <q-item-section side class="menu-icon">
+                <q-icon name="developer_board" />
+              </q-item-section>
+              <q-item-section>
+                Choose Board: {{ getBoardLabel(current_project.board) }}
+              </q-item-section>
+            </q-item>
+            <q-separator />
             <q-item clickable v-close-popup @click="closeApp">
               <q-item-section side class="menu-icon">
                 <q-icon name="close" />
@@ -70,6 +79,38 @@
       />
     </div>
   </q-header>
+  <q-dialog v-model="boardDialogOpen">
+    <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">Select Board</div>
+      </q-card-section>
+      <q-card-section>
+        <q-radio v-model="boardSelectMode" val="preset" label="Use tested board" />
+        <q-select
+          v-if="boardSelectMode === 'preset'"
+          v-model="selectedBoard"
+          :options="boardOptions"
+          label="Choose Board"
+          dense
+          options-dense
+          class="q-mt-sm"
+        />
+        <q-radio v-model="boardSelectMode" val="custom" label="Enter custom board" />
+        <q-input
+          v-if="boardSelectMode === 'custom'"
+          v-model="customBoard"
+          label="Enter board definition"
+          dense
+          class="q-mt-sm"
+        />
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="OK" color="primary" @click="saveBoard" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -82,11 +123,20 @@ import {
 import 'components/FabricaIODevice.vue'
 import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 // Text for current project directory
 const folderText = ref('None selected')
 
+// Board selection options
+const boardDialogOpen = ref(false)
+const boardSelectMode = ref('preset')
+const customBoard = ref('')
+
+// Declare emit
+const emit = defineEmits(['toggle-left-drawer'])
+
+// Access left drawer prop
 defineProps<{
   leftDrawerOpen: boolean
 }>()
@@ -105,6 +155,53 @@ const toggleMaximize = () => {
 
 const closeApp = () => {
   window.myWindowAPI?.close()
+}
+
+// Contains the officially supported board definitions (will be dynamically loaded eventually)
+const boards = ref({
+  dfrobot_firebeetle2_esp32e: {
+    env: '[env:dfrobot_firebeetle2_esp32e]\nboard = dfrobot_firebeetle2_esp32e',
+    label: 'DFRobot FireBeetle 2 ESP32-E',
+  },
+  esp32doit_devkit_v1: {
+    env: '[env:esp32doit-devkit-v1]\nboard = esp32doit-devkit-v1',
+    label: 'ESP32 DOIT DevKit V1',
+  },
+})
+
+// Opens the board selection dialog
+const openBoardDialog = () => {
+  boardDialogOpen.value = true
+}
+
+// Save selected board
+const saveBoard = () => {
+  if (boardSelectMode.value === 'preset') {
+    current_project.value.board = selectedBoard.value
+  } else {
+    // For custom boards, store the custom definition
+    current_project.value.board = customBoard.value
+  }
+}
+
+// Extracts the board value from the selected board
+const selectedBoard = computed({
+  get: () => current_project.value.board || '',
+  set: (choice: { label: string; value: string }) => {
+    current_project.value.board = choice.value
+  },
+})
+
+// Options for board dropdown selector
+const boardOptions = Object.entries(boards.value).map(([value, board]) => ({
+  label: board.label,
+  value: value,
+}))
+
+// Fixes the label to a friendly name in dropdown
+const getBoardLabel = (boardId: string): string => {
+  if (!boardId) return 'Select a board'
+  return boards.value[boardId as keyof typeof boards.value]?.label || boardId
 }
 
 // Lets user select the project directory
@@ -130,6 +227,7 @@ const exportProject = async () => {
   )
 }
 
+// Loads a project from JSON file
 const importProject = async () => {
   if (getProjectDir() === '') {
     alert('No project directory selected')
@@ -181,13 +279,12 @@ const buildProject = async () => {
   }
   writeDeviceLoadercpp(receivers, devices)
   let board = ''
-  switch (current_project.value.board) {
-    case 'dfrobot_firebeetle2_esp32e':
-      board = boards.dfrobot_firebeetle2_esp32e
-      break
-    default:
-      board = boards.dfrobot_firebeetle2_esp32e
-      break
+  if (boardSelectMode.value === 'preset') {
+    board =
+      boards.value[current_project.value.board as keyof typeof boards.value]?.env ||
+      boards.value.dfrobot_firebeetle2_esp32e.env
+  } else if (boardSelectMode.value === 'custom') {
+    board = '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
   }
   writePlatformIOini(libs, board)
 }
@@ -299,13 +396,6 @@ const writePlatformIOini = async (libs: string, board: string): Promise<boolean>
   platformIOini = fileParts[0] + board + fileParts[1]
 
   return window.fileops.writeFile(getProjectDir() + '/platformio.ini', platformIOini)
-}
-
-// Contains the officially supported board definitions (will be dynamically loaded eventually)
-const boards = {
-  dfrobot_firebeetle2_esp32e:
-    '[env:dfrobot_firebeetle2_esp32e]\nboard = dfrobot_firebeetle2_esp32e',
-  esp32doit_devkit_v1: '[env:esp32doit-devkit-v1]\nboard = esp32doit-devkit-v1',
 }
 </script>
 
