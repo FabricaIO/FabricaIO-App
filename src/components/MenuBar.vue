@@ -22,7 +22,7 @@
         @click="emit('toggle-left-drawer')"
       />
       <div class="cursor-pointer non-selectable">
-        <q-icon name="computer" />
+        <q-icon name="device_hub" />
         Project
         <q-menu>
           <q-list dense style="min-width: 100px">
@@ -71,7 +71,6 @@
         on-left
         flat
         dense
-        round
         icon="build"
         aria-label="Build"
         label="Build Project"
@@ -174,19 +173,27 @@ const openBoardDialog = () => {
   boardDialogOpen.value = true
 }
 
-// Save selected board
+// Save selected board if it's a custom selection
 const saveBoard = () => {
-  if (boardSelectMode.value === 'preset') {
-    current_project.value.board = selectedBoard.value
-  } else {
-    // For custom boards, store the custom definition
+  if (boardSelectMode.value === 'custom') {
     current_project.value.board = customBoard.value
   }
 }
 
 // Extracts the board value from the selected board
 const selectedBoard = computed({
-  get: () => current_project.value.board || '',
+  get: () => {
+    // If there's a board selected, return an object with label and value
+    if (current_project.value.board) {
+      const boardId = current_project.value.board
+      return {
+        label: boards.value[boardId as keyof typeof boards.value]?.label || boardId,
+        value: boardId,
+      }
+    }
+    // Return null for no selection
+    return null
+  },
   set: (choice: { label: string; value: string }) => {
     current_project.value.board = choice.value
   },
@@ -225,6 +232,7 @@ const exportProject = async () => {
     getProjectDir() + '/fabricaio.json',
     JSON.stringify(current_project.value),
   )
+  alert('Project saved!')
 }
 
 // Loads a project from JSON file
@@ -234,6 +242,10 @@ const importProject = async () => {
     return
   }
   loadProject(await window.fileops.readFile(getProjectDir() + '/fabricaio.json'))
+  if (!(current_project.value.board in boards.value)) {
+    boardSelectMode.value = 'custom'
+    customBoard.value = current_project.value.board
+  }
 }
 
 // Builds a project by creating the necessary source files from the current project

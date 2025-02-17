@@ -8,8 +8,9 @@
           icon="add"
           class="bg-primary text-white my-button"
           @click="openDialog"
-          label="Import from repo"
+          label="Import"
         />
+        <q-btn icon="refresh" class="bg-primary text-white my-button" label="Refresh" />
         <FabricaIODevice v-for="device in devicesList" :key="device.name" v-bind="device" />
       </q-list>
     </q-drawer>
@@ -19,7 +20,7 @@
     <q-dialog v-model="dialogVisible">
       <q-card style="min-width: 400px">
         <q-card-section>
-          <div class="text-h6">Import from Repo</div>
+          <div class="text-h6">Import From Repo</div>
         </q-card-section>
         <q-card-section>
           <q-input v-model="repoUrl" label="GitHub Repository URL" />
