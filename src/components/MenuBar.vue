@@ -157,16 +157,24 @@ const closeApp = () => {
 }
 
 // Contains the officially supported board definitions (will be dynamically loaded eventually)
-const boards = ref({
-  dfrobot_firebeetle2_esp32e: {
-    env: '[env:dfrobot_firebeetle2_esp32e]\nboard = dfrobot_firebeetle2_esp32e',
+const boards = ref([
+  {
+    name: 'dfrobot_firebeetle2_esp32e',
     label: 'DFRobot FireBeetle 2 ESP32-E',
   },
-  esp32doit_devkit_v1: {
-    env: '[env:esp32doit-devkit-v1]\nboard = esp32doit-devkit-v1',
+  {
+    name: 'esp32doit-devkit-v1',
     label: 'ESP32 DOIT DevKit V1',
   },
-})
+])
+
+// Options for board dropdown selector
+const boardOptions = ref(
+  boards.value.map((board) => ({
+    label: board.label,
+    value: board.name,
+  })),
+)
 
 // Opens the board selection dialog
 const openBoardDialog = () => {
@@ -187,7 +195,7 @@ const selectedBoard = computed({
     if (current_project.value.board) {
       const boardId = current_project.value.board
       return {
-        label: boards.value[boardId as keyof typeof boards.value]?.label || boardId,
+        label: boards.value.find((board) => board.name === boardId)?.label || boardId,
         value: boardId,
       }
     }
@@ -199,16 +207,10 @@ const selectedBoard = computed({
   },
 })
 
-// Options for board dropdown selector
-const boardOptions = Object.entries(boards.value).map(([value, board]) => ({
-  label: board.label,
-  value: value,
-}))
-
 // Fixes the label to a friendly name in dropdown
 const getBoardLabel = (boardId: string): string => {
   if (!boardId) return 'Select a board'
-  return boards.value[boardId as keyof typeof boards.value]?.label || boardId
+  return boards.value.find((board) => board.name === boardId)?.label || boardId
 }
 
 // Lets user select the project directory
@@ -306,14 +308,7 @@ const buildProject = async () => {
     writeDeviceLoaderh(includes, constructors)
   }
   writeDeviceLoadercpp(receivers, devices)
-  let board = ''
-  if (boardSelectMode.value === 'preset') {
-    board =
-      boards.value[current_project.value.board as keyof typeof boards.value]?.env ||
-      boards.value.dfrobot_firebeetle2_esp32e.env
-  } else if (boardSelectMode.value === 'custom') {
-    board = '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
-  }
+  const board = '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
   writePlatformIOini(libs, board)
 }
 
