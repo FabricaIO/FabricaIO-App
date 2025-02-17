@@ -91,9 +91,13 @@ watchEffect(() => {
 const getCardClass = (type: deviceTypes): string => {
   switch (type) {
     case deviceTypes.Actor:
-      return 'bg-primary'
+      return 'sensorCard'
     case deviceTypes.Sensor:
-      return 'bg-secondary'
+      return 'actorCard'
+    case deviceTypes.EventReceiver:
+      return 'eventCard'
+    case deviceTypes.LogReceiver:
+      return 'loggerCard'
     default:
       return 'bg-default'
   }

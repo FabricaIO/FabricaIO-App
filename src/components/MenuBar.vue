@@ -262,29 +262,45 @@ const buildProject = async () => {
   let libs = ''
   let includes = ''
   let first = true
+  let first_receiver = true
+  let first_device = true
 
   current_project.value.devices.forEach((device) => {
     if (!first) {
       constructors += '\t\t'
-      receivers += '\t'
-      devices += '\t'
       libs += '\t'
     } else {
       first = false
     }
     const lib_buff = buildLibs(device)
     const include_buff = buildIncludes(device)
+    const receivers_buff = buildReceiverLoaders(device)
+    const devices_buff = buildDeviceLoaders(device)
     if (!libs_array.includes(lib_buff)) {
       libs += lib_buff + '\n'
       libs_array.push(lib_buff)
     }
     if (!includes_array.includes(include_buff)) {
-      includes += include_buff + '\n'
+      includes += include_buff
       includes_array.push(include_buff)
     }
     constructors += buildConstructors(device) + '\n'
-    receivers += buildReceiverLoaders(device) + '\n'
-    devices += buildDeviceLoaders(device) + '\n'
+    if (receivers_buff !== '') {
+      if (!first_receiver) {
+        receivers += '\t'
+      } else {
+        first_receiver = false
+      }
+      receivers += receivers_buff + '\n'
+    }
+    if (devices_buff !== '') {
+      if (!first_device) {
+        devices += '\t'
+      } else {
+        first_device = false
+      }
+      devices += devices_buff + '\n'
+    }
   })
   if (await window.fileops.makeDir(getProjectDir() + '/lib/DeviceLoader/src/')) {
     writeDeviceLoaderh(includes, constructors)
@@ -365,11 +381,11 @@ const writeDeviceLoaderh = async (includes: string, constructors: string): Promi
     getProjectDir() + '/lib/DeviceLoader-example/src/DeviceLoader.h',
   )
 
-  let fileParts = deviceLoaderh.split('/******** Put additional includes here ********/')
+  let fileParts = deviceLoaderh.split('/******** Put additional includes here ********/\n')
   deviceLoaderh = fileParts[0] + includes + fileParts[1]
 
   fileParts = deviceLoaderh.split(
-    '/******** Declare sensor, actor, and receiver objects here ********/',
+    '/******** Declare sensor, actor, and receiver objects here ********/\n',
   )
   deviceLoaderh = fileParts[0] + constructors + fileParts[1]
 
@@ -385,10 +401,12 @@ const writeDeviceLoadercpp = async (receivers: string, devices: string): Promise
     getProjectDir() + '/lib/DeviceLoader-example/src/DeviceLoader.cpp',
   )
 
-  let fileParts = deviceLoadercpp.split('/******** Add event receivers and loggers here ********/')
+  let fileParts = deviceLoadercpp.split(
+    '/******** Add event receivers and loggers here ********/\n',
+  )
   deviceLoadercpp = fileParts[0] + receivers + fileParts[1]
 
-  fileParts = deviceLoadercpp.split('/******** Add senors and actors here ********/')
+  fileParts = deviceLoadercpp.split('/******** Add senors and actors here ********/\n')
   deviceLoadercpp = fileParts[0] + devices + fileParts[1]
 
   return window.fileops.writeFile(
