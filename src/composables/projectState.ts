@@ -9,6 +9,7 @@ let project_dir = ''
 interface Project {
   devices: FabricaIODeviceProps[]
   board: string
+  partition: string
   lib_deps: string[]
 }
 
@@ -16,6 +17,7 @@ interface Project {
 const current_project = ref<Project>({
   devices: [],
   board: 'dfrobot_firebeetle2_esp32e',
+  partition: '',
   lib_deps: [],
 })
 

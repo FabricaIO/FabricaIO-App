@@ -46,13 +46,19 @@
               <q-item-section>Load Project</q-item-section>
             </q-item>
             <q-separator />
-            <q-item clickable v-close-popup @click="openBoardDialog">
+            <q-item clickable v-close-popup @click="boardDialogOpen = true">
               <q-item-section side class="menu-icon">
                 <q-icon name="developer_board" />
               </q-item-section>
               <q-item-section>
                 Choose Board: {{ getBoardLabel(current_project.board) }}
               </q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="partitionDialogOpen = true">
+              <q-item-section side class="menu-icon">
+                <q-icon name="repartition" />
+              </q-item-section>
+              <q-item-section> Partition map: {{ current_project.partition }} </q-item-section>
             </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="closeApp">
@@ -103,7 +109,25 @@
           class="q-mt-sm"
         />
       </q-card-section>
-
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="OK" color="primary" @click="saveBoard" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="partitionDialogOpen">
+    <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">Select Partition Map</div>
+      </q-card-section>
+      <q-card-section>
+        <q-input
+          v-model="current_project.partition"
+          label="Partition map file"
+          dense
+          class="q-mt-sm"
+        />
+      </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancel" color="primary" v-close-popup />
         <q-btn flat label="OK" color="primary" @click="saveBoard" v-close-popup />
@@ -131,6 +155,9 @@ const folderText = ref('None selected')
 const boardDialogOpen = ref(false)
 const boardSelectMode = ref('preset')
 const customBoard = ref('')
+
+// Partition file selection options
+const partitionDialogOpen = ref(false)
 
 // Declare emit
 const emit = defineEmits(['toggle-left-drawer'])
@@ -175,11 +202,6 @@ const boardOptions = ref(
     value: board.name,
   })),
 )
-
-// Opens the board selection dialog
-const openBoardDialog = () => {
-  boardDialogOpen.value = true
-}
 
 // Save selected board if it's a custom selection
 const saveBoard = () => {
@@ -309,7 +331,7 @@ const buildProject = async () => {
   }
   writeDeviceLoadercpp(receivers, devices)
   const board = '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
-  writePlatformIOini(libs, board)
+  writePlatformIOini(current_project.value.partition, libs, board)
 }
 
 // Builds the constructor string for a device
@@ -411,11 +433,19 @@ const writeDeviceLoadercpp = async (receivers: string, devices: string): Promise
 }
 
 // Writes the platformio.ini file
-const writePlatformIOini = async (libs: string, board: string): Promise<boolean> => {
+const writePlatformIOini = async (
+  partition: string,
+  libs: string,
+  board: string,
+): Promise<boolean> => {
   let platformIOini = await window.fileops.readFile(getProjectDir() + '/platformio-example.ini')
 
   let fileParts = platformIOini.split('; Place additional libraries here')
   platformIOini = fileParts[0] + libs + fileParts[1]
+  if (partition !== '') {
+    fileParts = platformIOini.split('; Add partition map here: e.g min_spiffs.csv')
+    platformIOini = fileParts[0] + 'board_build.partitions = ' + partition + fileParts[1]
+  }
 
   fileParts = platformIOini.split('; Add necessary board definitions here')
   platformIOini = fileParts[0] + board + fileParts[1]
