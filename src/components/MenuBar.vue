@@ -291,8 +291,8 @@ const buildProject = async () => {
 
   current_project.value.devices.forEach((device) => {
     if (!first) {
-      constructors += '\t\t'
-      libs += '\t'
+      constructors += '\n\t\t'
+      libs += '\n\t'
     } else {
       first = false
     }
@@ -301,29 +301,29 @@ const buildProject = async () => {
     const receivers_buff = buildReceiverLoaders(device)
     const devices_buff = buildDeviceLoaders(device)
     if (!libs_array.includes(lib_buff)) {
-      libs += lib_buff + '\n'
+      libs += lib_buff + ''
       libs_array.push(lib_buff)
     }
     if (!includes_array.includes(include_buff)) {
       includes += include_buff
       includes_array.push(include_buff)
     }
-    constructors += buildConstructors(device) + '\n'
+    constructors += buildConstructors(device) + ''
     if (receivers_buff !== '') {
       if (!first_receiver) {
-        receivers += '\t'
+        receivers += '\n\t'
       } else {
         first_receiver = false
       }
-      receivers += receivers_buff + '\n'
+      receivers += receivers_buff + ''
     }
     if (devices_buff !== '') {
       if (!first_device) {
-        devices += '\t'
+        devices += '\n\t'
       } else {
         first_device = false
       }
-      devices += devices_buff + '\n'
+      devices += devices_buff + ''
     }
   })
   if (await window.fileops.makeDir(getProjectDir() + '/lib/DeviceLoader/src/')) {
@@ -382,7 +382,7 @@ const buildReceiverLoaders = (device: FabricaIODeviceProps): string => {
 const buildIncludes = (device: FabricaIODeviceProps): string => {
   let includes = ''
   device.includes.forEach((include) => {
-    includes += '#include <' + include + '.h>' + '\n'
+    includes += '#include <' + include + '.h>' + ''
   })
   return includes
 }
@@ -398,11 +398,11 @@ const writeDeviceLoaderh = async (includes: string, constructors: string): Promi
     getProjectDir() + '/lib/DeviceLoader-example/src/DeviceLoader.h',
   )
 
-  let fileParts = deviceLoaderh.split('/******** Put additional includes here ********/\n')
+  let fileParts = deviceLoaderh.split('/******** Put additional includes here ********/')
   deviceLoaderh = fileParts[0] + includes + fileParts[1]
 
   fileParts = deviceLoaderh.split(
-    '/******** Declare sensor, actor, and receiver objects here ********/\n',
+    '/******** Declare sensor, actor, and receiver objects here ********/',
   )
   deviceLoaderh = fileParts[0] + constructors + fileParts[1]
 
@@ -418,12 +418,10 @@ const writeDeviceLoadercpp = async (receivers: string, devices: string): Promise
     getProjectDir() + '/lib/DeviceLoader-example/src/DeviceLoader.cpp',
   )
 
-  let fileParts = deviceLoadercpp.split(
-    '/******** Add event receivers and loggers here ********/\n',
-  )
+  let fileParts = deviceLoadercpp.split('/******** Add event receivers and loggers here ********/')
   deviceLoadercpp = fileParts[0] + receivers + fileParts[1]
 
-  fileParts = deviceLoadercpp.split('/******** Add senors and actors here ********/\n')
+  fileParts = deviceLoadercpp.split('/******** Add senors and actors here ********/')
   deviceLoadercpp = fileParts[0] + devices + fileParts[1]
 
   return window.fileops.writeFile(
