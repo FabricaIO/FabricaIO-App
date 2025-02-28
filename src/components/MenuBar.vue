@@ -3,9 +3,7 @@
     <q-bar class="q-electron-drag">
       <q-icon name="sensors" />
       <div>Fabrica-IO Builder</div>
-
       <q-space />
-
       <q-btn dense flat icon="minimize" @click="minimize" />
       <q-btn dense flat icon="crop_square" @click="toggleMaximize" />
       <q-btn dense flat icon="close" @click="closeApp" />
@@ -21,7 +19,8 @@
         aria-label="Menu"
         @click="emit('toggle-left-drawer')"
       />
-      <div class="cursor-pointer non-selectable">
+      <q-separator vertical spaced color="white" />
+      <div class="cursor-pointer non-selectable my-highlight">
         <q-icon name="device_hub" />
         Project
         <q-menu>
@@ -58,7 +57,13 @@
               <q-item-section side class="menu-icon">
                 <q-icon name="repartition" />
               </q-item-section>
-              <q-item-section> Partition map: {{ current_project.partition }} </q-item-section>
+              <q-item-section> Partition Map: {{ current_project.partition }} </q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="storageDialogOpen = true">
+              <q-item-section side class="menu-icon">
+                <q-icon name="repartition" />
+              </q-item-section>
+              <q-item-section> Storage System: {{ current_project.storage }} </q-item-section>
             </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="closeApp">
@@ -134,6 +139,91 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog v-model="storageDialogOpen">
+    <q-card style="min-width: 350px">
+      <q-radio v-model="storageSelectMode" val="FLASH" label="Use Internal Flash" />
+      <q-radio v-model="storageSelectMode" val="SPI" label="Use SD Card (SPI)" />
+      <q-radio v-model="storageSelectMode" val="SDIO" label="Use SD/MMC Card (SDIO)" />
+      <div v-if="storageSelectMode === 'SPI'" class="row q-col-gutter-sm">
+        <q-input
+          type="number"
+          v-model="storage_pins[0]"
+          label="SDI"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[1]"
+          label="SDO"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[2]"
+          label="SCK"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[3]"
+          label="CS"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+      </div>
+      <div v-if="storageSelectMode === 'SDIO'" class="row q-col-gutter-sm">
+        <q-input
+          type="number"
+          v-model="storage_pins[0]"
+          label="CLK"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[1]"
+          label="CMD"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[2]"
+          label="D0"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[3]"
+          label="D1"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[4]"
+          label="D2"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+        <q-input
+          type="number"
+          v-model="storage_pins[5]"
+          label="D3"
+          dense
+          class="my-small-input q-mt-sm"
+        />
+      </div>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="OK" color="primary" @click="saveStorage" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -156,8 +246,33 @@ const boardDialogOpen = ref(false)
 const boardSelectMode = ref('preset')
 const customBoard = ref('')
 
+// Contains the officially supported board definitions (will be dynamically loaded eventually)
+const boards = ref([
+  {
+    name: 'dfrobot_firebeetle2_esp32e',
+    label: 'DFRobot FireBeetle 2 ESP32-E',
+  },
+  {
+    name: 'esp32doit-devkit-v1',
+    label: 'ESP32 DOIT DevKit V1',
+  },
+])
+
+// Options for board dropdown selector
+const boardOptions = ref(
+  boards.value.map((board) => ({
+    label: board.label,
+    value: board.name,
+  })),
+)
+
 // Partition file selection options
 const partitionDialogOpen = ref(false)
+
+// Storage selection options
+const storageDialogOpen = ref(false)
+const storageSelectMode = ref('FLASH')
+const storage_pins = ref<number[]>([])
 
 // Declare emit
 const emit = defineEmits(['toggle-left-drawer'])
@@ -182,26 +297,6 @@ const toggleMaximize = () => {
 const closeApp = () => {
   window.myWindowAPI?.close()
 }
-
-// Contains the officially supported board definitions (will be dynamically loaded eventually)
-const boards = ref([
-  {
-    name: 'dfrobot_firebeetle2_esp32e',
-    label: 'DFRobot FireBeetle 2 ESP32-E',
-  },
-  {
-    name: 'esp32doit-devkit-v1',
-    label: 'ESP32 DOIT DevKit V1',
-  },
-])
-
-// Options for board dropdown selector
-const boardOptions = ref(
-  boards.value.map((board) => ({
-    label: board.label,
-    value: board.name,
-  })),
-)
 
 // Save selected board if it's a custom selection
 const saveBoard = () => {
@@ -228,6 +323,24 @@ const selectedBoard = computed({
     current_project.value.board = choice.value
   },
 })
+
+// Save selected board if it's a custom selection
+const saveStorage = () => {
+  switch (storageSelectMode.value) {
+    case 'FLASH':
+      current_project.value.storage = 'FLASH'
+      break
+    case 'SPI':
+      current_project.value.storage = 'SPI'
+      current_project.value.storage_options = [...storage_pins.value.slice(0, 4)]
+      break
+    case 'SDIO':
+      current_project.value.storage = 'SDIO'
+      current_project.value.storage_options = [...storage_pins.value.slice(0, 6)]
+      break
+  }
+  console.log(current_project.value.storage_options)
+}
 
 // Fixes the label to a friendly name in dropdown
 const getBoardLabel = (boardId: string): string => {
@@ -270,6 +383,8 @@ const importProject = async () => {
     boardSelectMode.value = 'custom'
     customBoard.value = current_project.value.board
   }
+  storageSelectMode.value = current_project.value.storage || 'FLASH'
+  storage_pins.value = current_project.value.storage_options || []
 }
 
 // Builds a project by creating the necessary source files from the current project
@@ -332,6 +447,7 @@ const buildProject = async () => {
   writeDeviceLoadercpp(receivers, devices)
   const board = '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
   writePlatformIOini(current_project.value.partition, libs, board)
+  writeStorage(current_project.value.storage, current_project.value.storage_options)
 }
 
 // Builds the constructor string for a device
@@ -450,9 +566,30 @@ const writePlatformIOini = async (
 
   return window.fileops.writeFile(getProjectDir() + '/platformio.ini', platformIOini)
 }
+
+const writeStorage = async (storage: string, pins: number[]): Promise<boolean> => {
+  let main_text = await window.fileops.readFile(getProjectDir() + '/src/main-example.cpp')
+  console.log(storage)
+  if (storage !== 'FLASH') {
+    const fileParts = main_text.split('Storage::begin()')
+    main_text = fileParts[0] + 'Storage::begin(' + pins.join(', ') + ')' + fileParts[1]
+  }
+  return window.fileops.writeFile(getProjectDir() + '/src/main.cpp', main_text)
+}
 </script>
 
 <style lang="sass" scoped>
 .menu-icon
   padding-right: 3px
+
+.my-highlight
+  padding: 0.3em
+
+.my-highlight:hover
+  background-color: rgba(255, 255, 255, 0.13)
+  border-radius: 0.3em
+
+.my-small-input
+  width: 4em
+  margin: 0 0.5em 0 0.5em
 </style>

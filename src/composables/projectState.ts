@@ -10,6 +10,8 @@ interface Project {
   devices: FabricaIODeviceProps[]
   board: string
   partition: string
+  storage: string
+  storage_options: number[]
   lib_deps: string[]
 }
 
@@ -18,6 +20,8 @@ const current_project = ref<Project>({
   devices: [],
   board: 'dfrobot_firebeetle2_esp32e',
   partition: '',
+  storage: 'FLASH',
+  storage_options: [],
   lib_deps: [],
 })
 
