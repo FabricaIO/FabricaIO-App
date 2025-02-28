@@ -49,9 +49,7 @@
               <q-item-section side class="menu-icon">
                 <q-icon name="developer_board" />
               </q-item-section>
-              <q-item-section>
-                Choose Board: {{ getBoardLabel(current_project.board) }}
-              </q-item-section>
+              <q-item-section> Board: {{ getBoardLabel(current_project.board) }} </q-item-section>
             </q-item>
             <q-item clickable v-close-popup @click="partitionDialogOpen = true">
               <q-item-section side class="menu-icon">
@@ -61,7 +59,7 @@
             </q-item>
             <q-item clickable v-close-popup @click="storageDialogOpen = true">
               <q-item-section side class="menu-icon">
-                <q-icon name="repartition" />
+                <q-icon name="sd_card" />
               </q-item-section>
               <q-item-section> Storage System: {{ current_project.storage }} </q-item-section>
             </q-item>
