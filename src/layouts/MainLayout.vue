@@ -14,7 +14,7 @@
         <FabricaIODevice v-for="device in devicesList" :key="device.name" v-bind="device" />
       </q-list>
     </q-drawer>
-    <q-page-container>
+    <q-page-container class="graph-paper">
       <router-view />
     </q-page-container>
     <q-dialog v-model="dialogVisible">
@@ -100,4 +100,8 @@ function toggleLeftDrawer() {
 <style lang="sass" scoped>
 .my-button
   margin-left: 1em
+
+.graph-paper
+  background-size: 1.5em 1.5em
+  background-image: radial-gradient(circle, gray 1px, rgba(0, 0, 0, 0) 1px)
 </style>
