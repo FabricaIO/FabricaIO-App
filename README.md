@@ -1,7 +1,7 @@
 # FabricaIO-App
-This app is used to setup and configure you Fabrica-Io project. For details on the useage of this app, pelase refer to the [wiki](https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage).
+This app is used to setup and configure you Fabrica-IO project. For details on the useage of this app, please refer to the [wiki](https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage).
 
-The below guide will go trough how to setup the toolchain and build/run the app.
+The below guide will go through how to setup the toolchain and build/run the app.
 
 ## Toolchain Setup
 1. Download or clone this repository.
