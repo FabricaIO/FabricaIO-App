@@ -566,7 +566,7 @@ const writePlatformIOini = async (
 }
 
 const writeStorage = async (storage: string, pins: number[]): Promise<boolean> => {
-  let main_text = await window.fileops.readFile(getProjectDir() + '/src/main-example.cpp')
+  let main_text = await window.fileops.readFile(getProjectDir() + '/src/main-example.bak')
   console.log(storage)
   if (storage !== 'FLASH') {
     const fileParts = main_text.split('Storage::begin()')
