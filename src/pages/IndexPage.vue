@@ -75,6 +75,7 @@
 import { reactive, watchEffect } from 'vue'
 import { current_project, removeDevice } from '../composables/projectState'
 import { deviceTypes } from '../components/FabricaIODevice.vue'
+import { Dialog } from 'quasar'
 
 const tabs = reactive<{ [key: string]: string }>({})
 
@@ -111,7 +112,13 @@ const openRepo = (url: string) => {
 // Checks if a device name already exists in the project
 const updateName = (oldName: string, newName: string) => {
   if (current_project.value.devices.some((device) => device.name === newName)) {
-    alert(`Device with name "${newName}" already exists.`)
+    Dialog.create({
+      title: 'Error',
+      message: `Device with name "${newName}" already exists.`,
+      ok: {
+        flat: true,
+      },
+    })
     return
   }
   const device = current_project.value.devices.find((device) => device.name === oldName)

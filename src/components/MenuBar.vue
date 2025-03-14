@@ -235,6 +235,7 @@ import 'components/FabricaIODevice.vue'
 import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
 import { computed, ref } from 'vue'
+import { Dialog } from 'quasar'
 
 // Text for current project directory
 const folderText = ref('None selected')
@@ -360,20 +361,38 @@ const loadProjectDir = async () => {
 // Exports a project as a JSON
 const exportProject = async () => {
   if (getProjectDir() === '') {
-    alert('No project directory selected')
+    Dialog.create({
+      title: 'Error',
+      message: 'No project directory selected',
+      ok: {
+        flat: true,
+      },
+    })
     return
   }
   window.fileops.writeFile(
     getProjectDir() + '/fabricaio.json',
     JSON.stringify(current_project.value),
   )
-  alert('Project saved!')
+  Dialog.create({
+    title: 'Success',
+    message: 'Project has been saved successfully',
+    ok: {
+      flat: true,
+    },
+  })
 }
 
 // Loads a project from JSON file
 const importProject = async () => {
   if (getProjectDir() === '') {
-    alert('No project directory selected')
+    Dialog.create({
+      title: 'Error',
+      message: 'No project directory selected',
+      ok: {
+        flat: true,
+      },
+    })
     return
   }
   loadProject(await window.fileops.readFile(getProjectDir() + '/fabricaio.json'))
@@ -388,7 +407,13 @@ const importProject = async () => {
 // Builds a project by creating the necessary source files from the current project
 const buildProject = async () => {
   if (getProjectDir() === '') {
-    alert('No project directory selected')
+    Dialog.create({
+      title: 'Error',
+      message: 'No project directory selected',
+      ok: {
+        flat: true,
+      },
+    })
     return
   }
   const libs_array = [] as string[]
@@ -402,6 +427,7 @@ const buildProject = async () => {
   let first_include = true
   let first_receiver = true
   let first_device = true
+  let success = false
 
   current_project.value.devices.forEach((device) => {
     if (!first) {
@@ -446,12 +472,39 @@ const buildProject = async () => {
     }
   })
   if (await window.fileops.makeDir(getProjectDir() + '/lib/DeviceLoader/src/')) {
-    writeDeviceLoaderh(includes, constructors)
+    success = await writeDeviceLoaderh(includes, constructors)
   }
-  writeDeviceLoadercpp(receivers, devices)
-  const board = '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
-  writePlatformIOini(current_project.value.partition, libs, board)
-  writeStorage(current_project.value.storage, current_project.value.storage_options)
+  if (success) {
+    success = await writeDeviceLoadercpp(receivers, devices)
+    if (success) {
+      const board =
+        '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
+      success = await writePlatformIOini(current_project.value.partition, libs, board)
+      if (success) {
+        success = await writeStorage(
+          current_project.value.storage,
+          current_project.value.storage_options,
+        )
+      }
+    }
+  }
+  if (success) {
+    Dialog.create({
+      title: 'Success',
+      message: 'Project has been built successfully',
+      ok: {
+        flat: true,
+      },
+    })
+  } else {
+    Dialog.create({
+      title: 'Error',
+      message: 'There was an error building the project',
+      ok: {
+        flat: true,
+      },
+    })
+  }
 }
 
 // Builds the constructor string for a device
