@@ -399,6 +399,7 @@ const buildProject = async () => {
   let libs = ''
   let includes = ''
   let first = true
+  let first_include = true
   let first_receiver = true
   let first_device = true
 
@@ -418,6 +419,11 @@ const buildProject = async () => {
       libs_array.push(lib_buff)
     }
     if (!includes_array.includes(include_buff)) {
+      if (!first_include) {
+        includes += '\n'
+      } else {
+        first_include = false
+      }
       includes += include_buff
       includes_array.push(include_buff)
     }
