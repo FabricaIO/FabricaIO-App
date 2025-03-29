@@ -511,7 +511,7 @@ const buildProject = async () => {
 const buildConstructors = (device: FabricaIODeviceProps): string => {
   let constructor = device.libname + ' ' + device.name.replaceAll(' ', '') + '{'
   if (device.type === 0 || device.type === 1) {
-    constructor += '"' + device.name + '"",'
+    constructor += '"' + device.name + '"'
   }
   let first = true
   device.constructor[device.constructor_used]?.forEach((param) => {
@@ -521,6 +521,8 @@ const buildConstructors = (device: FabricaIODeviceProps): string => {
       } else {
         constructor += ', '
       }
+    } else {
+      constructor += ', '
     }
     if (param.type === 'String' || param.type == 'string') {
       constructor += '"' + param.default + '"'
