@@ -15,5 +15,12 @@ declare global {
       close: () => Promise<void>
       openExternal: (url: string) => Promise<void>
     }
+    shell: {
+      execCommand: (command: string, args: string[]) => Promise<boolean>
+      onBuildOutput: (callback: (data: string) => void) => void
+      removeAllListeners: (channel: string) => void
+      getUserInfo: () => Promise<{ uid: number; gid: number; homedir: string }>
+      platform: string
+    }
   }
 }

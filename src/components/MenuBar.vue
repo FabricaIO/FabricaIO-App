@@ -84,6 +84,7 @@
         aria-label="Build"
         label="Build Project"
         @click="buildProject"
+        :disable="buildInProgress"
       />
     </div>
   </q-header>
@@ -222,6 +223,19 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog v-model="buildDialogOpen" persistent :no-escape-on-esc="buildInProgress">
+    <q-card style="width: 950px; max-width: 1000px; overflow: hidden">
+      <q-card-section>
+        <div class="text-h6">Build Output</div>
+      </q-card-section>
+      <q-card-section>
+        <pre id="build-output"></pre>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="OK" :disable="buildInProgress" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -234,7 +248,7 @@ import {
 import 'components/FabricaIODevice.vue'
 import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
 
 // Text for current project directory
@@ -264,6 +278,10 @@ const boardOptions = ref(
     value: board.name,
   })),
 )
+
+// Build dialog
+const buildDialogOpen = ref(false)
+const buildInProgress = ref(false)
 
 // Partition file selection options
 const partitionDialogOpen = ref(false)
@@ -489,6 +507,9 @@ const buildProject = async () => {
     }
   }
   if (success) {
+    success = await compileWithDocker()
+  }
+  if (success) {
     Dialog.create({
       title: 'Success',
       message: 'Project has been built successfully',
@@ -633,13 +654,74 @@ const writePlatformIOini = async (
 
 const writeStorage = async (storage: string, pins: number[]): Promise<boolean> => {
   let main_text = await window.fileops.readFile(getProjectDir() + '/src/main-example.bak')
-  console.log(storage)
   if (storage !== 'FLASH') {
     const fileParts = main_text.split('Storage::begin()')
     main_text = fileParts[0] + 'Storage::begin(' + pins.join(', ') + ')' + fileParts[1]
   }
   return window.fileops.writeFile(getProjectDir() + '/src/main.cpp', main_text)
 }
+
+const compileWithDocker = async (): Promise<boolean> => {
+  if (!buildInProgress.value) {
+    buildInProgress.value = true
+    buildDialogOpen.value = true
+    const command = 'docker'
+
+    // Check if container exists
+    let args = ['ps', '-a']
+
+    let success = await window.shell.execCommand(command, args)
+    if (!success) {
+      buildInProgress.value = false
+      return false
+    }
+    const outputElement = document.getElementById('build-output')
+    if (outputElement?.textContent?.includes('fabricaio-dev')) {
+      args = ['start', '-i', 'fabricaio-dev']
+    } else {
+      args = [
+        'run',
+        '--name',
+        'fabricaio-dev',
+        '-v',
+        getProjectDir() + ':/workspace',
+        'ghcr.io/fabricaio/docker-platformio-core:master',
+        'run',
+      ]
+      // Add POSIX specific args
+      if (window.shell.platform !== 'win32') {
+        // Get user info
+        const user = await window.shell.getUserInfo()
+        const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
+        args.splice(2, 0, ...otherArgs)
+      }
+    }
+
+    // Log build args
+    console.log(args)
+    success = await window.shell.execCommand(command, args)
+    buildInProgress.value = false
+    return success
+  }
+  return false
+}
+
+// Receives output from build process
+onMounted(() => {
+  // Register the event handler
+  window.shell.onBuildOutput((data: string) => {
+    const outputElement = document.getElementById('build-output')
+    if (outputElement) {
+      outputElement.textContent += data
+      outputElement.scrollTop = outputElement.scrollHeight
+    }
+  })
+})
+
+onUnmounted(() => {
+  // Clean up the event handler
+  window.shell.removeAllListeners('build-output')
+})
 </script>
 
 <style lang="sass" scoped>
@@ -656,4 +738,14 @@ const writeStorage = async (storage: string, pins: number[]): Promise<boolean> =
 .my-small-input
   width: 4em
   margin: 0 0.5em 0 0.5em
+
+#build-output
+  max-height: 550px
+  font-family: monospace
+  width: 900px
+  white-space: pre-wrap
+  overflow: auto
+  background: #1e1e1e
+  color: #d4d4d4
+  scroll-behavior: smooth
 </style>

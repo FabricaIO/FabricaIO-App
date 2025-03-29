@@ -4,6 +4,7 @@ import os from 'os'
 import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
+import { spawn } from 'child_process'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -126,4 +127,31 @@ ipcMain.handle('make-dir', async (event, data: string): Promise<boolean> => {
   } catch {
     return false
   }
+})
+
+// Shell command IPCs
+ipcMain.handle('execute', async (_event, args) => {
+  const [command, commandArgs] = args
+  return new Promise((resolve) => {
+    const process = spawn(command, commandArgs)
+
+    process.stdout.on('data', (data) => {
+      mainWindow?.webContents.send('build-output', data.toString())
+    })
+
+    process.stderr.on('data', (data) => {
+      mainWindow?.webContents.send('build-output', data.toString())
+    })
+
+    process.on('close', (code) => {
+      mainWindow?.webContents.send('build-output', `Process exited with code ${code} \n`)
+      resolve(code === 0)
+    })
+  })
+})
+
+ipcMain.handle('get-user-info', () => {
+  const info = os.userInfo()
+  info.homedir = os.homedir()
+  return info
 })

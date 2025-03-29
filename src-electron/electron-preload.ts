@@ -43,6 +43,20 @@ contextBridge.exposeInMainWorld('fileops', {
   makeDir: (path: string): Promise<boolean> => ipcRenderer.invoke('make-dir', path),
 })
 
+contextBridge.exposeInMainWorld('shell', {
+  execCommand: (command: string, args: string[]): Promise<boolean> =>
+    ipcRenderer.invoke('execute', [command, args]),
+  onBuildOutput: (callback: (data: string) => void) => {
+    ipcRenderer.on('build-output', (_event, value) => callback(value))
+  },
+  removeAllListeners: (channel: string) => {
+    ipcRenderer.removeAllListeners(channel)
+  },
+  getUserInfo: (): Promise<{ uid: number; gid: number; homedir: string }> =>
+    ipcRenderer.invoke('get-user-info'),
+  platform: process.platform,
+})
+
 contextBridge.exposeInMainWorld('myWindowAPI', {
   minimize() {
     BrowserWindow.getFocusedWindow()?.minimize()

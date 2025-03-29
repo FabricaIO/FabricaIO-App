@@ -19,6 +19,7 @@
     "@quasar/cli": "^2.5.0",
     "@quasar/extras": "^1.16.4",
     "quasar": "^2.16.0",
+    "remove": "^0.1.5",
     "vue": "^3.4.18",
     "vue-router": "^4.0.12"
   },
@@ -38,6 +39,7 @@
     "prettier": "^3.3.3",
     "typescript": "~5.5.3",
     "vite-plugin-checker": "^0.8.0",
+    "vite-plugin-node-polyfills": "^0.23.0",
     "vue-tsc": "^2.0.29"
   },
   "engines": {
