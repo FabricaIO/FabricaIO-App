@@ -351,6 +351,8 @@ const customPort = ref('')
 const portOptions = ref<{ label: string; value: string }[]>([])
 
 const savePort = () => {
+  // Need to remove previous container if port has changed
+  window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-flash'])
   if (portSelectMode.value === 'advanced') {
     portPath.value = customPort.value
   }
@@ -515,7 +517,9 @@ const loadProjectDir = async () => {
   if (!result.canceled) {
     setProjectDir(result.filePaths[0] || '')
     folderText.value = result.filePaths[0] || 'None selected'
+    // Need to remove previous containers if folder has changed
     await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-dev'])
+    await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-flash'])
   } else {
     console.log('No file selected')
   }
@@ -856,29 +860,42 @@ const flashFirmware = async (): Promise<boolean> => {
     buildInProgress.value = true
     buildDialogOpen.value = true
     const command = 'docker'
-    const args = [
-      'run',
-      '--rm',
-      '--device',
-      portPath.value,
-      '-v',
-      getProjectDir() + ':/workspace',
-      'ghcr.io/fabricaio/docker-platformio-container:master',
-      'run',
-      '-t',
-      'upload',
-    ]
-    // Add POSIX specific args
-    if (window.shell.platform !== 'win32') {
-      // Get user info
-      const user = await window.shell.getUserInfo()
-      const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
-      args.splice(2, 0, ...otherArgs)
-    }
+    // Check if container exists
+    let args = ['ps', '-a']
 
+    let success = await window.shell.execCommand(command, args)
+    if (!success) {
+      buildInProgress.value = false
+      return false
+    }
+    const outputElement = document.getElementById('build-output')
+    if (outputElement?.textContent?.includes('fabricaio-flash')) {
+      args = ['start', '-i', 'fabricaio-flash']
+    } else {
+      const args = [
+        'run',
+        '--name',
+        'fabricaio-flash',
+        '--device',
+        portPath.value,
+        '-v',
+        getProjectDir() + ':/workspace',
+        'ghcr.io/fabricaio/docker-platformio-container:master',
+        'run',
+        '-t',
+        'upload',
+      ]
+      // Add POSIX specific args
+      if (window.shell.platform !== 'win32') {
+        // Get user info
+        const user = await window.shell.getUserInfo()
+        const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
+        args.splice(1, 0, ...otherArgs)
+      }
+    }
     // Log build args
     console.log(args)
-    const success = await window.shell.execCommand(command, args)
+    success = await window.shell.execCommand(command, args)
     buildInProgress.value = false
     return success
   }
