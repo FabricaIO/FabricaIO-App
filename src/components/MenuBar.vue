@@ -246,22 +246,32 @@
   </q-dialog>
   <q-dialog v-model="serialDialogOpen">
     <q-card style="min-width: 350px">
+      <q-radio v-model="portSelectMode" val="standard" label="Found Ports" />
       <q-card-section>
         <div class="text-h6">Select Serial Port</div>
       </q-card-section>
       <q-card-section>
         <q-select
           v-model="selectedPort"
+          v-if="portSelectMode === 'standard'"
           :options="portOptions"
           label="Choose Port"
           dense
           options-dense
           class="q-mt-sm"
         />
+        <q-radio v-model="portSelectMode" val="advanced" label="Enter Port (advanced)" />
+        <q-input
+          v-if="portSelectMode === 'advanced'"
+          v-model="customPort"
+          label="Enter port name or path"
+          dense
+          class="q-mt-sm"
+        />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancel" color="primary" v-close-popup />
-        <q-btn flat label="OK" color="primary" @click="saveBoard" v-close-popup />
+        <q-btn flat label="OK" color="primary" @click="savePort" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -336,7 +346,15 @@ const storage_pins = ref<number[]>([])
 // Serial port
 const portPath = ref('')
 const serialDialogOpen = ref(false)
+const portSelectMode = ref('standard')
+const customPort = ref('')
 const portOptions = ref<{ label: string; value: string }[]>([])
+
+const savePort = () => {
+  if (portSelectMode.value === 'advanced') {
+    portPath.value = customPort.value
+  }
+}
 
 const selectPort = async () => {
   try {
@@ -352,7 +370,7 @@ const selectPort = async () => {
   serialDialogOpen.value = true
 }
 
-// Extracts the board value from the selected board
+// Extracts the port value from the selected port
 const selectedPort = computed({
   get: () => {
     // If there's a port selected, return an object with label and value
