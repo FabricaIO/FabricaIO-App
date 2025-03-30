@@ -73,6 +73,27 @@
           </q-list>
         </q-menu>
       </div>
+      <div class="cursor-pointer non-selectable my-highlight">
+        <q-icon name="bolt" />
+        Flash Firmware
+        <q-menu>
+          <q-list dense style="min-width: 100px">
+            <q-item clickable v-close-popup @click="selectPort">
+              <q-item-section side class="menu-icon">
+                <q-icon name="power" />
+              </q-item-section>
+              <q-item-section> Serial Port: {{ getPortLabel(portPath) }} </q-item-section>
+            </q-item>
+            <q-separator />
+            <q-item clickable v-close-popup @click="uploadFirmware">
+              <q-item-section side class="menu-icon">
+                <q-icon name="upload" />
+              </q-item-section>
+              <q-item-section> Upload Firmware </q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </div>
       <q-separator vertical spaced color="white" />
       <q-item-section>Current project folder: {{ folderText }}</q-item-section>
       <q-space />
@@ -223,6 +244,27 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog v-model="serialDialogOpen">
+    <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">Select Serial Port</div>
+      </q-card-section>
+      <q-card-section>
+        <q-select
+          v-model="selectedPort"
+          :options="portOptions"
+          label="Choose Port"
+          dense
+          options-dense
+          class="q-mt-sm"
+        />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="OK" color="primary" @click="saveBoard" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
   <q-dialog v-model="buildDialogOpen" persistent :no-escape-on-esc="buildInProgress">
     <q-card style="width: 950px; max-width: 1000px; overflow: hidden">
       <q-card-section>
@@ -291,6 +333,90 @@ const storageDialogOpen = ref(false)
 const storageSelectMode = ref('FLASH')
 const storage_pins = ref<number[]>([])
 
+// Serial port
+const portPath = ref('')
+const serialDialogOpen = ref(false)
+const portOptions = ref<{ label: string; value: string }[]>([])
+
+const selectPort = async () => {
+  try {
+    const ports = await window.serial.listSerialPorts()
+    console.log(ports)
+    portOptions.value = ports.map((port) => ({
+      label: `${port.path} (${port.manufacturer || 'Unknown'})`,
+      value: port.path,
+    }))
+  } catch (error) {
+    console.error('Error fetching serial ports:', error)
+  }
+  serialDialogOpen.value = true
+}
+
+// Extracts the board value from the selected board
+const selectedPort = computed({
+  get: () => {
+    // If there's a port selected, return an object with label and value
+    if (portPath.value !== '') {
+      const currentPort = portPath.value
+      return {
+        label: portOptions.value.find((port) => port.value === currentPort)?.label || currentPort,
+        value: currentPort,
+      }
+    }
+    // Return none for no selection
+    return null
+  },
+  set: (choice: { label: string; value: string }) => {
+    portPath.value = choice.value
+  },
+})
+
+const uploadFirmware = async () => {
+  if (getProjectDir() === '') {
+    Dialog.create({
+      title: 'Error',
+      message: 'No project directory selected',
+      ok: {
+        flat: true,
+      },
+    })
+    return
+  }
+  if (portPath.value === '') {
+    Dialog.create({
+      title: 'Error',
+      message: 'No serial port selected',
+      ok: {
+        flat: true,
+      },
+    })
+    return
+  }
+  if (await flashFirmware()) {
+    Dialog.create({
+      title: 'Success',
+      message: 'Firmware uploaded!',
+      ok: {
+        flat: true,
+      },
+    })
+  } else {
+    Dialog.create({
+      title: 'Error',
+      message: 'Firmware upload failed',
+      ok: {
+        flat: true,
+      },
+    })
+  }
+}
+
+// Fixes the label to a friendly name in dropdown
+const getPortLabel = (portPath: string): string => {
+  if (!portPath) return 'Select a port'
+  return portOptions.value.find((port) => port.value === portPath)?.label || portPath
+}
+
 // Declare emit
 const emit = defineEmits(['toggle-left-drawer'])
 
@@ -341,7 +467,7 @@ const selectedBoard = computed({
   },
 })
 
-// Save selected board if it's a custom selection
+// Save storage options
 const saveStorage = () => {
   switch (storageSelectMode.value) {
     case 'FLASH':
@@ -694,13 +820,47 @@ const compileWithDocker = async (): Promise<boolean> => {
         // Get user info
         const user = await window.shell.getUserInfo()
         const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
-        args.splice(2, 0, ...otherArgs)
+        args.splice(1, 0, ...otherArgs)
       }
     }
 
     // Log build args
     console.log(args)
     success = await window.shell.execCommand(command, args)
+    buildInProgress.value = false
+    return success
+  }
+  return false
+}
+
+const flashFirmware = async (): Promise<boolean> => {
+  if (!buildInProgress.value) {
+    buildInProgress.value = true
+    buildDialogOpen.value = true
+    const command = 'docker'
+    const args = [
+      'run',
+      '--rm',
+      '--device',
+      portPath.value,
+      '-v',
+      getProjectDir() + ':/workspace',
+      'ghcr.io/fabricaio/docker-platformio-container:master',
+      'run',
+      '-t',
+      'upload',
+    ]
+    // Add POSIX specific args
+    if (window.shell.platform !== 'win32') {
+      // Get user info
+      const user = await window.shell.getUserInfo()
+      const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
+      args.splice(2, 0, ...otherArgs)
+    }
+
+    // Log build args
+    console.log(args)
+    const success = await window.shell.execCommand(command, args)
     buildInProgress.value = false
     return success
   }

@@ -22,5 +22,18 @@ declare global {
       getUserInfo: () => Promise<{ uid: number; gid: number; homedir: string }>
       platform: string
     }
+    serial: {
+      listSerialPorts: () => Promise<
+        Array<{
+          path: string
+          manufacturer?: string
+          serialNumber?: string
+          pnpId?: string
+          locationId?: string
+          vendorId?: string
+          productId?: string
+        }>
+      >
+    }
   }
 }

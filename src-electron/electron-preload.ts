@@ -57,6 +57,20 @@ contextBridge.exposeInMainWorld('shell', {
   platform: process.platform,
 })
 
+contextBridge.exposeInMainWorld('serial', {
+  listSerialPorts: (): Promise<
+    Array<{
+      path: string
+      manufacturer?: string
+      serialNumber?: string
+      pnpId?: string
+      locationId?: string
+      vendorId?: string
+      productId?: string
+    }>
+  > => ipcRenderer.invoke('get-serial-ports'),
+})
+
 contextBridge.exposeInMainWorld('myWindowAPI', {
   minimize() {
     BrowserWindow.getFocusedWindow()?.minimize()

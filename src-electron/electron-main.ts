@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
 import { spawn } from 'child_process'
+import { SerialPort } from 'serialport'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -154,4 +155,23 @@ ipcMain.handle('get-user-info', () => {
   const info = os.userInfo()
   info.homedir = os.homedir()
   return info
+})
+
+// IPC for getting serial ports
+ipcMain.handle('get-serial-ports', async () => {
+  try {
+    const ports = await SerialPort.list()
+    return ports.map((port) => ({
+      path: port.path,
+      manufacturer: port.manufacturer,
+      serialNumber: port.serialNumber,
+      pnpId: port.pnpId,
+      locationId: port.locationId,
+      vendorId: port.vendorId,
+      productId: port.productId,
+    }))
+  } catch (error) {
+    console.error('Error listing serial ports:', error)
+    return []
+  }
 })
