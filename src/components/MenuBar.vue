@@ -371,6 +371,7 @@ const loadProjectDir = async () => {
   if (!result.canceled) {
     setProjectDir(result.filePaths[0] || '')
     folderText.value = result.filePaths[0] || 'None selected'
+    await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-dev'])
   } else {
     console.log('No file selected')
   }
