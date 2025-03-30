@@ -685,7 +685,7 @@ const compileWithDocker = async (): Promise<boolean> => {
         'fabricaio-dev',
         '-v',
         getProjectDir() + ':/workspace',
-        'ghcr.io/fabricaio/docker-platformio-core:master',
+        'ghcr.io/fabricaio/docker-platformio-container:master',
         'run',
       ]
       // Add POSIX specific args
