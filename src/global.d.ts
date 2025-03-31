@@ -4,7 +4,7 @@ declare global {
   interface Window {
     fileops: {
       getProjectDir: () => Promise<Electron.OpenDialogReturnValue>
-      fileExists: (path: string) => Promise<string>
+      fileExists: (path: string) => Promise<boolean>
       readFile: (path: string) => Promise<string>
       writeFile: (path: string, content: string) => Promise<boolean>
       makeDir: (path: string) => Promise<boolean>
@@ -34,6 +34,7 @@ declare global {
           productId?: string
         }>
       >
+      flashFirmware: (data: { port: string; baud: string; projPath: string }) => Promise<boolean>
     }
   }
 }

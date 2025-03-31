@@ -4,13 +4,14 @@ import os from 'os'
 import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
-import { spawn } from 'child_process'
+import { exec, spawn } from 'child_process'
 import { SerialPort } from 'serialport'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
+const isDevelopment = process.env.NODE_ENV !== 'production'
 
 let mainWindow: BrowserWindow | undefined
 
@@ -174,4 +175,57 @@ ipcMain.handle('get-serial-ports', async () => {
     console.error('Error listing serial ports:', error)
     return []
   }
+})
+
+// IPC for flashing chips uinsg esptool
+ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
+  let command
+  const plat = process.platform
+
+  const resourcePath = isDevelopment
+    ? path.join(process.cwd(), 'public')
+    : path.join(process.resourcesPath, 'app')
+
+  if (plat == 'win32') {
+    command = path.join(resourcePath, 'esptool.exe')
+  } else if (plat == 'linux') {
+    command = path.join(resourcePath, 'esptool')
+    exec('chmod 744 ' + command)
+  } else {
+    console.log('Platform not supported')
+    mainWindow?.webContents.send('build-output', `Platform not supported \n`)
+    return false
+  }
+  const commandArgs: string[] = [
+    '-p',
+    data.port,
+    '-b',
+    data.baud,
+    'write_flash',
+    '0x0',
+    data.projPath + 'firmware-merged.bin',
+  ]
+
+  console.log(commandArgs)
+  return new Promise((resolve) => {
+    try {
+      const process = spawn(command, commandArgs)
+
+      process.stdout.on('data', (data) => {
+        mainWindow?.webContents.send('build-output', data.toString())
+      })
+
+      process.stderr.on('data', (data) => {
+        mainWindow?.webContents.send('build-output', data.toString())
+      })
+
+      process.on('close', (code) => {
+        mainWindow?.webContents.send('build-output', `Process exited with code ${code} \n`)
+        resolve(code === 0)
+      })
+    } catch (error) {
+      mainWindow?.webContents.send('build-output', `Failed to start process: ${error}\n`)
+      return false
+    }
+  })
 })

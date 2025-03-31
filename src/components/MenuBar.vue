@@ -91,6 +91,17 @@
               </q-item-section>
               <q-item-section> Upload Firmware </q-item-section>
             </q-item>
+            <q-item tag="label" v-ripple>
+              <q-item-section side top>
+                <q-checkbox v-model="mergeFirmware" @click="deleteContainer" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Merge Firmware</q-item-label>
+                <q-item-label caption>
+                  Merge firmware into single file for uploading (uncheck for OTA updates)
+                </q-item-label>
+              </q-item-section>
+            </q-item>
           </q-list>
         </q-menu>
       </div>
@@ -268,6 +279,13 @@
           dense
           class="q-mt-sm"
         />
+        <q-input
+          v-if="portSelectMode === 'advanced'"
+          v-model="serialBaud"
+          label="Enter baud rate"
+          dense
+          class="q-mt-sm"
+        />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancel" color="primary" v-close-popup />
@@ -302,6 +320,13 @@ import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
+
+const mergeFirmware = ref(true)
+
+// Removes existing container
+const deleteContainer = async (): Promise<boolean> => {
+  return await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-dev'])
+}
 
 // Text for current project directory
 const folderText = ref('None selected')
@@ -348,11 +373,10 @@ const portPath = ref('')
 const serialDialogOpen = ref(false)
 const portSelectMode = ref('standard')
 const customPort = ref('')
+const serialBaud = ref('460800')
 const portOptions = ref<{ label: string; value: string }[]>([])
 
 const savePort = () => {
-  // Need to remove previous container if port has changed
-  window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-flash'])
   if (portSelectMode.value === 'advanced') {
     portPath.value = customPort.value
   }
@@ -518,8 +542,10 @@ const loadProjectDir = async () => {
     setProjectDir(result.filePaths[0] || '')
     folderText.value = result.filePaths[0] || 'None selected'
     // Need to remove previous containers if folder has changed
-    await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-dev'])
-    await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-flash'])
+    await deleteContainer()
+    if (window.shell.platform !== 'win32') {
+      await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-flash'])
+    }
   } else {
     console.log('No file selected')
   }
@@ -844,6 +870,9 @@ const compileWithDocker = async (): Promise<boolean> => {
         const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
         args.splice(1, 0, ...otherArgs)
       }
+      if (mergeFirmware.value) {
+        args.push('-t', 'mergebin')
+      }
     }
 
     // Log build args
@@ -859,43 +888,24 @@ const flashFirmware = async (): Promise<boolean> => {
   if (!buildInProgress.value) {
     buildInProgress.value = true
     buildDialogOpen.value = true
-    const command = 'docker'
-    // Check if container exists
-    let args = ['ps', '-a']
-
-    let success = await window.shell.execCommand(command, args)
-    if (!success) {
-      buildInProgress.value = false
-      return false
+    let dirChar = '/'
+    if (window.shell.platform === 'win32') {
+      dirChar = '\\'
     }
-    const outputElement = document.getElementById('build-output')
-    if (outputElement?.textContent?.includes('fabricaio-flash')) {
-      args = ['start', '-i', 'fabricaio-flash']
-    } else {
-      const args = [
-        'run',
-        '--name',
-        'fabricaio-flash',
-        '--device',
-        portPath.value,
-        '-v',
-        getProjectDir() + ':/workspace',
-        'ghcr.io/fabricaio/docker-platformio-container:master',
-        'run',
-        '-t',
-        'upload',
-      ]
-      // Add POSIX specific args
-      if (window.shell.platform !== 'win32') {
-        // Get user info
-        const user = await window.shell.getUserInfo()
-        const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
-        args.splice(1, 0, ...otherArgs)
-      }
-    }
-    // Log build args
-    console.log(args)
-    success = await window.shell.execCommand(command, args)
+    const projPath =
+      getProjectDir() +
+      dirChar +
+      '.pio' +
+      dirChar +
+      'build' +
+      dirChar +
+      selectedBoard.value?.value +
+      dirChar
+    const success = await window.serial.flashFirmware({
+      port: selectedPort.value?.value || '',
+      baud: serialBaud.value,
+      projPath: projPath,
+    })
     buildInProgress.value = false
     return success
   }

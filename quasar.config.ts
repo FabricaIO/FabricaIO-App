@@ -183,7 +183,8 @@ export default defineConfig((/* ctx */) => {
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
         // OS X / Mac App Store
-        appBundleId: 'com.fabricaio.capp',
+        appBundleId: 'com.fabricaio.app',
+        asar: false,
         // appCategoryType: '',
         // osxSign: '',
         // protocol: 'myapp://path',
@@ -193,7 +194,7 @@ export default defineConfig((/* ctx */) => {
 
       builder: {
         // https://www.electron.build/configuration/configuration
-        appId: 'com.fabricaio.capp',
+        appId: 'com.fabricaio.app',
         mac: {
           icon: 'src-electron/icons/icon.icns',
           target: [

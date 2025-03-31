@@ -36,7 +36,7 @@ import { BrowserWindow } from '@electron/remote'
 contextBridge.exposeInMainWorld('fileops', {
   getProjectDir: (): Promise<Electron.OpenDialogReturnValue> =>
     ipcRenderer.invoke('open-directory-dialog'),
-  fileExists: (path: string): Promise<string> => ipcRenderer.invoke('file-exists', path),
+  fileExists: (path: string): Promise<boolean> => ipcRenderer.invoke('file-exists', path),
   readFile: (path: string): Promise<string> => ipcRenderer.invoke('read-file', path),
   writeFile: (path: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke('write-file', { path, content }),
@@ -69,6 +69,8 @@ contextBridge.exposeInMainWorld('serial', {
       productId?: string
     }>
   > => ipcRenderer.invoke('get-serial-ports'),
+  flashFirmware: (data: { port: string; baud: string; projPath: string }): Promise<boolean> =>
+    ipcRenderer.invoke('flash-firmware', data),
 })
 
 contextBridge.exposeInMainWorld('myWindowAPI', {
