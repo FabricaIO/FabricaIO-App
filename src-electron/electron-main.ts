@@ -189,7 +189,16 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
   if (plat == 'win32') {
     command = path.join(resourcePath, 'esptool.exe')
   } else if (plat == 'linux') {
-    command = path.join(resourcePath, 'esptool')
+    if (process.arch === 'x64') {
+      command = path.join(resourcePath, 'esptool')
+    }
+    if (process.arch === 'arm64') {
+      command = path.join(resourcePath, 'esptoolarm')
+    } else {
+      console.log('Platform not supported')
+      mainWindow?.webContents.send('build-output', `Platform not supported \n`)
+      return false
+    }
     exec('chmod 744 ' + command)
   } else {
     console.log('Platform not supported')
