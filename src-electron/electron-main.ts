@@ -134,6 +134,7 @@ ipcMain.handle('make-dir', async (event, data: string): Promise<boolean> => {
 // Shell command IPCs
 ipcMain.handle('execute', async (_event, args) => {
   const [command, commandArgs] = args
+  console.log(commandArgs)
   return new Promise((resolve) => {
     const process = spawn(command, commandArgs)
 
@@ -177,29 +178,31 @@ ipcMain.handle('get-serial-ports', async () => {
   }
 })
 
-// IPC for flashing chips uinsg esptool
+// IPC for flashing chips using esptool
 ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
-  let command
-  const plat = process.platform
+  let command: string
 
   const resourcePath = isDevelopment
     ? path.join(process.cwd(), 'public')
     : path.join(process.resourcesPath, 'app')
 
-  if (plat == 'win32') {
+  if (platform == 'win32') {
     command = path.join(resourcePath, 'esptool.exe')
-  } else if (plat == 'linux') {
+  } else if (platform == 'linux') {
     if (process.arch === 'x64') {
       command = path.join(resourcePath, 'esptool')
-    }
-    if (process.arch === 'arm64') {
+    } else if (process.arch === 'arm64') {
+      command = path.join(resourcePath, 'esptoolarm64')
+    } else if (process.arch === 'arm') {
       command = path.join(resourcePath, 'esptoolarm')
     } else {
-      console.log('Platform not supported')
-      mainWindow?.webContents.send('build-output', `Platform not supported \n`)
+      console.log('Architecture not supported')
+      mainWindow?.webContents.send('build-output', `Architecture not supported \n`)
       return false
     }
     exec('chmod 744 ' + command)
+  } else if (platform === 'darwin') {
+    command = path.join(resourcePath, 'esptoolmac')
   } else {
     console.log('Platform not supported')
     mainWindow?.webContents.send('build-output', `Platform not supported \n`)
