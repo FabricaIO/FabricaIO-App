@@ -509,12 +509,26 @@ const setOTADevice = () => {
 }
 
 const handleOTAUpload = async () => {
+  if (getProjectDir() === '') {
+    createDialog('Error', 'No project directory selected')
+    return
+  }
+  if (!deviceAddress.value || !devicePassword.value || !deviceUsername.value) {
+    createDialog('Error', 'Missing OTA Target parameters')
+    return
+  }
+  const dirChar = window.shell.platform === 'win32' ? '\\' : '/'
+  const firmwarePath = `${getProjectDir()}${dirChar}.pio${dirChar}build${dirChar}${selectedBoard.value?.value}${dirChar}firmware.bin`
+  if (!(await window.fileops.fileExists(firmwarePath))) {
+    createDialog('Error', 'Firmware not found, run build first')
+    return
+  }
   try {
     OTAUpdateDialog.value = true
     OTAMessage.value = 'Initiating OTA update...'
     progressValue.value = 0
 
-    const firmware = await getFirmwareFile()
+    const firmware = await window.fileops.readBinaryFile(firmwarePath)
     const firmwareArray = Array.from(new Uint8Array(firmware))
 
     const response = await window.ota.uploadFirmware({
@@ -547,13 +561,6 @@ const handleOTAUpload = async () => {
     }
     progressValue.value = 0
   }
-}
-
-const getFirmwareFile = async (): Promise<ArrayBuffer> => {
-  const dirChar = window.shell.platform === 'win32' ? '\\' : '/'
-  const firmwarePath = `${getProjectDir()}${dirChar}.pio${dirChar}build${dirChar}${selectedBoard.value?.value}${dirChar}firmware.bin`
-
-  return await window.fileops.readBinaryFile(firmwarePath)
 }
 
 // Declare emit
