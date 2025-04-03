@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld('fileops', {
     ipcRenderer.invoke('open-directory-dialog'),
   fileExists: (path: string): Promise<boolean> => ipcRenderer.invoke('file-exists', path),
   readFile: (path: string): Promise<string> => ipcRenderer.invoke('read-file', path),
+  readBinaryFile: (path: string): Promise<ArrayBuffer> =>
+    ipcRenderer.invoke('read-binary-file', path),
   writeFile: (path: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke('write-file', { path, content }),
   makeDir: (path: string): Promise<boolean> => ipcRenderer.invoke('make-dir', path),
@@ -90,4 +92,51 @@ contextBridge.exposeInMainWorld('myWindowAPI', {
     BrowserWindow.getFocusedWindow()?.close()
   },
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+})
+
+contextBridge.exposeInMainWorld('ota', {
+  uploadFirmware: (options: {
+    firmware: number[]
+    deviceAddress: string
+    username: string
+    password: string
+    onProgress: (loaded: number, total: number) => void
+  }): Promise<{ success: boolean; error?: string }> => {
+    return new Promise((resolve, reject) => {
+      // Set up progress listener
+      const progressHandler = (
+        _event: Electron.IpcRendererEvent,
+        progress: { loaded: number; total: number },
+      ) => {
+        if (options.onProgress) {
+          options.onProgress(progress.loaded, progress.total)
+        }
+      }
+
+      // Add progress listener
+      ipcRenderer.on('ota-progress', progressHandler)
+
+      // Forward request to main process with the array as second argument
+      ipcRenderer
+        .invoke('ota-update', {
+          firmware: options.firmware,
+          deviceAddress: options.deviceAddress,
+          username: options.username,
+          password: options.password,
+        })
+        .then((result) => {
+          resolve(result as { success: boolean; error?: string })
+        })
+        .catch((error) => {
+          reject({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+          })
+        })
+        .finally(() => {
+          // Clean up listener
+          ipcRenderer.removeListener('ota-progress', progressHandler)
+        })
+    })
+  },
 })

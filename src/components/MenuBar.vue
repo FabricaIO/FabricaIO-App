@@ -84,23 +84,24 @@
               </q-item-section>
               <q-item-section> Serial Port: {{ getPortLabel(portPath) }} </q-item-section>
             </q-item>
-            <q-separator />
             <q-item clickable v-close-popup @click="uploadFirmware">
               <q-item-section side class="menu-icon">
                 <q-icon name="upload" />
               </q-item-section>
               <q-item-section> Upload Firmware </q-item-section>
             </q-item>
-            <q-item tag="label" v-ripple>
-              <q-item-section side top>
-                <q-checkbox v-model="mergeFirmware" @click="deleteContainer" />
+            <q-separator />
+            <q-item clickable v-close-popup @click="setOTADevice">
+              <q-item-section side class="menu-icon">
+                <q-icon name="router" />
               </q-item-section>
-              <q-item-section>
-                <q-item-label>Merge Firmware</q-item-label>
-                <q-item-label caption>
-                  Merge firmware into single file for uploading (uncheck for OTA updates)
-                </q-item-label>
+              <q-item-section> OTA Target: {{ deviceAddress }} </q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="handleOTAUpload">
+              <q-item-section side class="menu-icon">
+                <q-icon name="upload" />
               </q-item-section>
+              <q-item-section>Perform OTA Update</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -296,13 +297,71 @@
   <q-dialog v-model="buildDialogOpen" persistent :no-escape-on-esc="buildInProgress">
     <q-card style="width: 950px; max-width: 1000px; overflow: hidden">
       <q-card-section>
-        <div class="text-h6">Build Output</div>
+        <div class="text-h6">Output</div>
       </q-card-section>
       <q-card-section>
         <pre id="build-output"></pre>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="OK" :disable="buildInProgress" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="OTADialogOpen">
+    <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">OTA Settings</div>
+      </q-card-section>
+      <q-card-section>
+        <q-input v-model="deviceAddress" label="Enter device address" dense class="q-mt-sm" />
+        <q-input
+          v-model="deviceUsername"
+          label="Enter web interface username"
+          dense
+          class="q-mt-sm"
+        />
+        <q-input
+          v-model="devicePassword"
+          filled
+          dense
+          class="q-mt-sm"
+          :type="isPwd ? 'password' : 'text'"
+          hint="Web interface password"
+        >
+          <template v-slot:append>
+            <q-icon
+              :name="isPwd ? 'visibility_off' : 'visibility'"
+              class="cursor-pointe"
+              dense
+              @click="isPwd = !isPwd"
+            />
+          </template>
+        </q-input>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="OK" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="OTAUpdateDialog">
+    <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">OTA Update</div>
+      </q-card-section>
+      <q-card-section>
+        <div class="text-subtitle1">{{ OTAMessage }}</div>
+        <q-linear-progress
+          :value="progressValue"
+          class="q-mt-md"
+          rounded
+          size="md"
+          color="primary"
+          :indeterminate="progressValue === 0"
+        />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="OK" color="primary" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -320,8 +379,6 @@ import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
-
-const mergeFirmware = ref(true)
 
 // Removes existing container
 const deleteContainer = async (): Promise<boolean> => {
@@ -435,6 +492,68 @@ const uploadFirmware = async () => {
 const getPortLabel = (portPath: string): string => {
   if (!portPath) return 'Select a port'
   return portOptions.value.find((port) => port.value === portPath)?.label || portPath
+}
+
+// OTA variables
+const OTADialogOpen = ref(false)
+const OTAUpdateDialog = ref(false)
+const progressValue = ref(0)
+const deviceAddress = ref('')
+const deviceUsername = ref('')
+const devicePassword = ref('')
+const OTAMessage = ref('')
+const isPwd = ref(true)
+
+const setOTADevice = () => {
+  OTADialogOpen.value = true
+}
+
+const handleOTAUpload = async () => {
+  try {
+    OTAUpdateDialog.value = true
+    OTAMessage.value = 'Initiating OTA update...'
+    progressValue.value = 0
+
+    const firmware = await getFirmwareFile()
+    const firmwareArray = Array.from(new Uint8Array(firmware))
+
+    const response = await window.ota.uploadFirmware({
+      firmware: firmwareArray,
+      deviceAddress: deviceAddress.value,
+      username: deviceUsername.value,
+      password: devicePassword.value,
+      onProgress: (loaded: number, total: number) => {
+        console.log('Upload progress: ' + String(loaded / total))
+        progressValue.value = loaded / total
+        OTAMessage.value = `Uploading: ${Math.round(progressValue.value * 100)}%`
+      },
+    })
+
+    if (response.success) {
+      progressValue.value = 1
+      OTAMessage.value = 'Update successful! Device is rebooting...'
+    } else {
+      // Handle the error object directly
+      OTAMessage.value = `Error: ${response.error || 'Upload failed'}`
+      progressValue.value = 0
+    }
+  } catch (error) {
+    // Handle both Error objects and error response objects
+    if (error && typeof error === 'object' && 'error' in error) {
+      console.log(error.error)
+      OTAMessage.value = `Error: ${error.error}`
+    } else {
+      OTAMessage.value = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+    progressValue.value = 0
+  }
+}
+
+const getFirmwareFile = async (): Promise<ArrayBuffer> => {
+  const dirChar = window.shell.platform === 'win32' ? '\\' : '/'
+  const firmwarePath = `${getProjectDir()}${dirChar}.pio${dirChar}build${dirChar}${selectedBoard.value?.value}${dirChar}firmware.bin`
+
+  return await window.fileops.readBinaryFile(firmwarePath)
 }
 
 // Declare emit
@@ -666,7 +785,7 @@ const buildConstructors = (device: FabricaIODeviceProps): string => {
       constructor += param.default
     }
   })
-  constructor += '};'
+  constructor += ') };'
   return constructor
 }
 
@@ -802,6 +921,8 @@ const compileWithDocker = async (): Promise<boolean> => {
         getProjectDir() + ':/workspace',
         'ghcr.io/fabricaio/docker-platformio-container:master',
         'run',
+        '-t',
+        'mergebin',
       ]
       // Add POSIX specific args
       if (window.shell.platform !== 'win32') {
@@ -809,9 +930,6 @@ const compileWithDocker = async (): Promise<boolean> => {
         const user = await window.shell.getUserInfo()
         const otherArgs = ['-u', user.uid.toString() + ':' + user.gid.toString()]
         args.splice(1, 0, ...otherArgs)
-      }
-      if (mergeFirmware.value) {
-        args.push('-t', 'mergebin')
       }
     }
 
@@ -828,10 +946,7 @@ const flashFirmware = async (): Promise<boolean> => {
   if (!buildInProgress.value) {
     buildInProgress.value = true
     buildDialogOpen.value = true
-    let dirChar = '/'
-    if (window.shell.platform === 'win32') {
-      dirChar = '\\'
-    }
+    const dirChar = window.shell.platform === 'win32' ? '\\' : '/'
     const projPath =
       getProjectDir() +
       dirChar +

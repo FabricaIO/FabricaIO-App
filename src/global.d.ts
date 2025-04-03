@@ -6,6 +6,7 @@ declare global {
       getProjectDir: () => Promise<Electron.OpenDialogReturnValue>
       fileExists: (path: string) => Promise<boolean>
       readFile: (path: string) => Promise<string>
+      readBinaryFile: (path: string) => Promise<ArrayBuffer>
       writeFile: (path: string, content: string) => Promise<boolean>
       makeDir: (path: string) => Promise<boolean>
     }
@@ -35,6 +36,15 @@ declare global {
         }>
       >
       flashFirmware: (data: { port: string; baud: string; projPath: string }) => Promise<boolean>
+    }
+    ota: {
+      uploadFirmware: (options: {
+        firmware: number[]
+        deviceAddress: string
+        username: string
+        password: string
+        onProgress: (loaded: number, total: number) => void
+      }) => Promise<{ success: boolean; error?: string }>
     }
   }
 }
