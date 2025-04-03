@@ -785,7 +785,7 @@ const buildConstructors = (device: FabricaIODeviceProps): string => {
       constructor += param.default
     }
   })
-  constructor += ') };'
+  constructor += '};'
   return constructor
 }
 
