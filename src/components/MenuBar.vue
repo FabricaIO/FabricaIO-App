@@ -417,41 +417,17 @@ const selectedPort = computed({
 
 const uploadFirmware = async () => {
   if (getProjectDir() === '') {
-    Dialog.create({
-      title: 'Error',
-      message: 'No project directory selected',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'No project directory selected')
     return
   }
   if (portPath.value === '') {
-    Dialog.create({
-      title: 'Error',
-      message: 'No serial port selected',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'No serial port selected')
     return
   }
   if (await flashFirmware()) {
-    Dialog.create({
-      title: 'Success',
-      message: 'Firmware uploaded!',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Success', 'Firmware uploaded!')
   } else {
-    Dialog.create({
-      title: 'Error',
-      message: 'Firmware upload failed',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'Firmware upload failed')
   }
 }
 
@@ -554,38 +530,20 @@ const loadProjectDir = async () => {
 // Exports a project as a JSON
 const exportProject = async () => {
   if (getProjectDir() === '') {
-    Dialog.create({
-      title: 'Error',
-      message: 'No project directory selected',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'No project directory selected')
     return
   }
   window.fileops.writeFile(
     getProjectDir() + '/fabricaio.json',
     JSON.stringify(current_project.value),
   )
-  Dialog.create({
-    title: 'Success',
-    message: 'Project has been saved successfully',
-    ok: {
-      flat: true,
-    },
-  })
+  createDialog('Success', 'Project saved!')
 }
 
 // Loads a project from JSON file
 const importProject = async () => {
   if (getProjectDir() === '') {
-    Dialog.create({
-      title: 'Error',
-      message: 'No project directory selected',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'No project directory selected')
     return
   }
   loadProject(await window.fileops.readFile(getProjectDir() + '/fabricaio.json'))
@@ -600,13 +558,7 @@ const importProject = async () => {
 // Builds a project by creating the necessary source files from the current project
 const buildProject = async () => {
   if (getProjectDir() === '') {
-    Dialog.create({
-      title: 'Error',
-      message: 'No project directory selected',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'No project directory selected')
     return
   }
   const libs_array = [] as string[]
@@ -685,21 +637,9 @@ const buildProject = async () => {
     success = await compileWithDocker()
   }
   if (success) {
-    Dialog.create({
-      title: 'Success',
-      message: 'Project has been built successfully',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Success', 'Project build successfully!')
   } else {
-    Dialog.create({
-      title: 'Error',
-      message: 'There was an error building the project',
-      ok: {
-        flat: true,
-      },
-    })
+    createDialog('Error', 'There was an error building the project')
   }
 }
 
@@ -910,6 +850,16 @@ const flashFirmware = async (): Promise<boolean> => {
     return success
   }
   return false
+}
+
+const createDialog = (title: string, message: string) => {
+  Dialog.create({
+    title: title,
+    message: message,
+    ok: {
+      flat: true,
+    },
+  })
 }
 
 // Receives output from build process
