@@ -304,6 +304,7 @@
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="OK" :disable="buildInProgress" color="primary" v-close-popup />
+        <q-btn flat label="Cancel" @click="cancelBuild" color="primary" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -947,6 +948,20 @@ const compileWithDocker = async (): Promise<boolean> => {
     return success
   }
   return false
+}
+
+const cancelBuild = async () => {
+  if (buildInProgress.value) {
+    const command = 'docker'
+
+    // Kill the docker container
+    const args = ['kill', 'fabricaio-dev']
+
+    const success = await window.shell.execCommand(command, args)
+    if (success) {
+      buildInProgress.value = false
+    }
+  }
 }
 
 const flashFirmware = async (): Promise<boolean> => {
