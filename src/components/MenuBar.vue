@@ -894,6 +894,7 @@ const writePlatformIOini = async (
   return window.fileops.writeFile(getProjectDir() + '/platformio.ini', platformIOini)
 }
 
+// Writes the storage configuration to the main.cpp file
 const writeStorage = async (storage: string, pins: number[]): Promise<boolean> => {
   let main_text = await window.fileops.readFile(getProjectDir() + '/src/main-example.bak')
   if (storage !== 'FLASH') {
@@ -903,6 +904,7 @@ const writeStorage = async (storage: string, pins: number[]): Promise<boolean> =
   return window.fileops.writeFile(getProjectDir() + '/src/main.cpp', main_text)
 }
 
+// Builds (compiles) project with PlatformIO docker container
 const compileWithDocker = async (): Promise<boolean> => {
   if (!buildInProgress.value) {
     buildInProgress.value = true
@@ -950,6 +952,7 @@ const compileWithDocker = async (): Promise<boolean> => {
   return false
 }
 
+// Cancels a build in progress
 const cancelBuild = async () => {
   if (buildInProgress.value) {
     const command = 'docker'
@@ -961,9 +964,12 @@ const cancelBuild = async () => {
     if (success) {
       buildInProgress.value = false
     }
+  } else {
+    buildDialogOpen.value = false
   }
 }
 
+// Flashes firmware through serial
 const flashFirmware = async (): Promise<boolean> => {
   if (!buildInProgress.value) {
     buildInProgress.value = true
@@ -989,6 +995,7 @@ const flashFirmware = async (): Promise<boolean> => {
   return false
 }
 
+// Utility function to create dialogs
 const createDialog = (title: string, message: string) => {
   Dialog.create({
     title: title,
