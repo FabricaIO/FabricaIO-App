@@ -1,6 +1,6 @@
 {
   "name": "fabricaio-app",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "App for configuring FabricaIO devices",
   "productName": "Fabrica-IO App",
   "appId": "com.fabrica-io.fabrica-io-app",
