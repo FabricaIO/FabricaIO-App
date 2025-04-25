@@ -194,24 +194,19 @@ export default defineConfig((/* ctx */) => {
 
       builder: {
         // https://www.electron.build/configuration/configuration
-        appId: 'com.fabricaio.app',
-        // mac: {
-        //   icon: 'src-electron/icons/icon.icns',
-        //   target: [
-        //     {
-        //       target: 'default',
-        //       arch: ['universal'],
-        //     },
-        //   ],
-        // },
+        appId: 'com.fabrica-io.fabrica-io-app',
+        mac: {
+          icon: 'src-electron/icons/icon.icns',
+          target: [
+            {
+              target: 'default',
+              arch: ['universal'],
+            },
+          ],
+        },
         nsis: {
           installerIcon: 'src-electron/icons/icon.ico',
           uninstallerIcon: 'src-electron/icons/icon.ico',
-        },
-        linux: {
-          artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
-          icon: 'src-electron/icons/icon.ico',
-          category: 'Utility',
         },
         win: {
           icon: 'src-electron/icons/icon.ico',

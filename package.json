@@ -1,9 +1,8 @@
 {
   "name": "fabricaio-app",
   "version": "0.1.0",
-  "description": "App for configuring FabricaIO devices",
+  "description": "App for configuring Fabrica-IO devices",
   "productName": "Fabrica-IO App",
-  "appId": "com.fabrica-io.fabrica-io-app",
   "author": "Sam Groveman <Groveman@fabrica-io.com>",
   "type": "module",
   "private": true,
