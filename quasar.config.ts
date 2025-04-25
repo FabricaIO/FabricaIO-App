@@ -204,6 +204,24 @@ export default defineConfig((/* ctx */) => {
             },
           ],
         },
+        linux: {
+          target: [
+            {
+              target: 'appImage',
+              arch: ['x64'],
+            },
+            {
+              target: 'deb',
+              arch: ['x64'],
+            },
+          ],
+        },
+        deb: {
+          category: 'Utility',
+        },
+        appImage: {
+          category: 'Utility',
+        },
         nsis: {
           installerIcon: 'src-electron/icons/icon.ico',
           uninstallerIcon: 'src-electron/icons/icon.ico',
