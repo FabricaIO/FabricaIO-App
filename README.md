@@ -3,6 +3,9 @@ This app is used to setup and configure you Fabrica-IO project. For details on t
 
 The below guide will go through how to setup the toolchain and build/run the app.
 
+## Installation
+You can download the appropriate version of the app from our [releases](https://github.com/FabricaIO/FabricaIO-App/releases) or continue below to set up the app to compile your own version.
+
 ## Toolchain Setup
 1. Download or clone this repository.
 2. Install `Node` with `npm` using [these instructions](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm/), `nvm` is recommended to install the other items. `Yarn` can also be used, but that isn't covered here.
