@@ -210,6 +210,10 @@ export default defineConfig((/* ctx */) => {
               target: 'appImage',
               arch: ['x64'],
             },
+            // {
+            //   target: 'flatpak',
+            //   arch: ['x64'],
+            // },
             {
               target: 'deb',
               arch: ['x64'],
