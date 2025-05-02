@@ -19,6 +19,7 @@ let mainWindow: BrowserWindow | undefined
 initialize()
 
 function createWindow() {
+  // process.env.PATH += ':/run/host/usr/bin' // Possible Flatpak fix not currently in use
   /**
    * Initial window options
    */

@@ -226,6 +226,30 @@ export default defineConfig((/* ctx */) => {
         appImage: {
           category: 'Utility',
         },
+        flatpak: {
+          useWaylandFlags: true,
+          runtimeVersion: '24.08',
+          finishArgs: [
+            // Wayland/X11 Rendering
+            '--socket=wayland',
+            '--socket=x11',
+            '--share=ipc',
+            // Open GL
+            '--device=all',
+            // Audio output
+            '--socket=pulseaudio',
+            '--socket=system-bus',
+            '--socket=session-bus',
+            // Read/write host directory access
+            '--filesystem=host',
+            '--filesystem=host-os',
+            '--filesystem=/var/run',
+            // Allow communication with network
+            '--share=network',
+            // System notifications with libnotify
+            '--talk-name=org.freedesktop.Notifications',
+          ],
+        },
         nsis: {
           installerIcon: 'src-electron/icons/icon.ico',
           uninstallerIcon: 'src-electron/icons/icon.ico',

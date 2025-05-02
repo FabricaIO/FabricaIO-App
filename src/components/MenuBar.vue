@@ -646,9 +646,6 @@ const loadProjectDir = async () => {
     folderText.value = result.filePaths[0] || 'None selected'
     // Need to remove previous containers if folder has changed
     await deleteContainer()
-    if (window.shell.platform !== 'win32') {
-      await window.shell.execCommand('docker', ['rm', '-v', 'fabricaio-flash'])
-    }
   } else {
     console.log('No file selected')
   }
