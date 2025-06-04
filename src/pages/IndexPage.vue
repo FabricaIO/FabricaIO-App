@@ -27,7 +27,7 @@
             </q-card-section>
             <q-separator dark />
             <q-card-actions>
-              <q-btn @click="removeDevice(device.name)"> Remove Device </q-btn>
+              <q-btn @click="removeDevice(device.name)" color="red"> Remove Device </q-btn>
               <q-btn @click="openRepo(device.repo)" flat> Repository </q-btn>
             </q-card-actions>
           </q-tab-panel>
