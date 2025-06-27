@@ -23,7 +23,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
         with:
-          node-version: 23
+          node-version: 24
 
       - name: Quasar Electron Builder Action
         uses: vedaprakashms/quasar_electron_build@V0.0.1

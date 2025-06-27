@@ -199,7 +199,7 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
 
   const resourcePath = isDevelopment
     ? path.join(process.cwd(), 'public')
-    : path.join(process.resourcesPath, 'app')
+    : path.join(process.resourcesPath, 'app.asar.unpacked')
 
   if (platform == 'win32') {
     command = path.join(resourcePath, 'esptool.exe')

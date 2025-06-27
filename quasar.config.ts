@@ -195,6 +195,7 @@ export default defineConfig((/* ctx */) => {
       builder: {
         // https://www.electron.build/configuration/configuration
         appId: 'com.fabrica-io.fabrica-io-app',
+        asarUnpack: ['*esptool*'],
         mac: {
           icon: 'src-electron/icons/icon.icns',
           target: [
