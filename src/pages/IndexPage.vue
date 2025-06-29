@@ -48,7 +48,9 @@
             <q-input
               class="my-input"
               :model-value="device.name"
-              @update:model-value="(val) => updateName(device.name, val?.toString() || '')"
+              @update:model-value="
+                (val: string | number | null) => updateName(device.name, val?.toString() || '')
+              "
               debounce="500"
               label="Device Name"
               outlined
@@ -114,7 +116,7 @@ const updateName = (oldName: string, newName: string) => {
   if (current_project.value.devices.some((device) => device.name === newName)) {
     Dialog.create({
       title: 'Error',
-      message: `Device with name "${newName}" already exists.`,
+      message: `Device with name "${newName}" already exists in this project. Please use a different name.`,
       ok: {
         flat: true,
       },

@@ -404,6 +404,14 @@ const boards = ref([
     name: 'esp32doit-devkit-v1',
     label: 'ESP32 DOIT DevKit V1',
   },
+  {
+    name: 'lolin_s3',
+    label: 'WEMOS LOLIN S3 PRO',
+  },
+  {
+    name: 'adafruit_qtpy_esp32s3_n4r2',
+    label: 'Adafruit QT Py ESP32-S3 (4M Flash 2M PSRAM)',
+  },
 ])
 
 // Options for board dropdown selector

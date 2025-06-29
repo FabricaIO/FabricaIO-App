@@ -46,7 +46,7 @@ const addDevice = (device: FabricaIODeviceProps) => {
   } else {
     Dialog.create({
       title: 'Error',
-      message: `Device with name "${device.name}" already exists.`,
+      message: `Device with name "${device.name}" already exists in this project. Please change that device's name to add another of the same type.`,
       ok: {
         flat: true,
       },
