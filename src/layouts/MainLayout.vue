@@ -16,7 +16,18 @@
           @click="refreshDevices"
           label="Refresh"
         />
-        <FabricaIODevice v-for="device in devicesList" :key="device.name" v-bind="device" />
+        <q-input
+          v-model="search"
+          debounce="150"
+          class="search-class"
+          filled
+          placeholder="Search Devices"
+        >
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+        <FabricaIODevice v-for="device in filteredDevices" :key="device.name" v-bind="device" />
       </q-list>
     </q-drawer>
     <q-page-container class="graph-paper">
@@ -40,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import type { deviceTypes } from 'components/FabricaIODevice.vue'
 import FabricaIODevice, { type FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import MenuBar from 'components/MenuBar.vue'
@@ -81,10 +92,25 @@ function openDialog() {
   dialogVisible.value = true
 }
 
-async function refreshDevices() {
+function refreshDevices() {
   importDevices()
 }
 
+// Contents of search bar
+const search = ref('')
+
+// Filter device list by search term
+const filteredDevices = computed(() => {
+  const searchTerm = search.value.toLowerCase()
+  if (!searchTerm) return devicesList.value
+  return devicesList.value.filter(
+    (device) =>
+      device.name.toLowerCase().includes(searchTerm) ||
+      device.description.toLowerCase().includes(searchTerm),
+  )
+})
+
+// Imports GitHub repo as device
 function importRepo() {
   console.log('Importing from repo:', repoUrl.value)
 
@@ -116,7 +142,7 @@ function importRepo() {
   // Eventually will save added devices to local database
 }
 
-// Import devices json from online database
+// Import devices from online database
 function importDevices() {
   console.log('Importing devices from web database')
   fetch('https://fabrica-io.azurewebsites.net/api/device')
@@ -147,7 +173,7 @@ function importDevices() {
     })
 }
 
-// Add device to side bar from JSON string
+// Add device to sidebar from JSON string
 function addDevice(deviceJson: string) {
   const content = JSON.parse(deviceJson)
   console.log('Device JSON data:', content)
@@ -194,4 +220,9 @@ function toggleLeftDrawer() {
 .graph-paper
   background-size: 1.5em 1.5em
   background-image: radial-gradient(circle, gray 1px, rgba(0, 0, 0, 0) 1px)
+
+.search-class
+  margin-top: 0.5em
+  border-top: 1px solid gray
+  border-bottom: 1px solid gray
 </style>
