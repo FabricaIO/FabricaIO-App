@@ -10,7 +10,12 @@
           @click="openDialog"
           label="Import"
         />
-        <q-btn icon="refresh" class="bg-primary text-white my-button" label="Refresh" />
+        <q-btn
+          icon="refresh"
+          class="bg-primary text-white my-button"
+          @click="refreshDevices"
+          label="Refresh"
+        />
         <FabricaIODevice v-for="device in devicesList" :key="device.name" v-bind="device" />
       </q-list>
     </q-drawer>
@@ -35,13 +40,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import type { deviceTypes } from 'components/FabricaIODevice.vue'
 import FabricaIODevice, { type FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import MenuBar from 'components/MenuBar.vue'
+import { useQuasar } from 'quasar'
+
+// Quasar object
+const $q = useQuasar()
 
 // List of available devices
 const devicesList = ref<FabricaIODeviceProps[]>([])
+
+onMounted(() => {
+  if ($q.localStorage.hasItem('devices')) {
+    console.log('Device json found')
+    const devicesStr = $q.localStorage.getItem('devices')
+    if (devicesStr !== null) {
+      const deviceList = JSON.parse(String(devicesStr))
+      if (Date.now() - deviceList.timestamp < 86400000) {
+        console.log('Using local device database')
+        deviceList.devices.forEach((device: unknown) => {
+          if (typeof device === 'object' && device !== null && 'deviceJson' in device) {
+            addDevice((device as { deviceJson: string }).deviceJson)
+          }
+        })
+        return
+      }
+    }
+  }
+  console.log('Importing devices from web database')
+  importDevices()
+})
 
 const leftDrawerOpen = ref(false)
 const dialogVisible = ref(false)
@@ -49,6 +79,10 @@ const repoUrl = ref('')
 
 function openDialog() {
   dialogVisible.value = true
+}
+
+async function refreshDevices() {
+  importDevices()
 }
 
 function importRepo() {
@@ -71,19 +105,8 @@ function importRepo() {
     })
     .then((data) => {
       // GitHub API returns content as base64 encoded
-      const content = JSON.parse(atob(data.content))
-      console.log('Fetched JSON data:', content)
-      devicesList.value.unshift({
-        name: content['fabrica-io'].name,
-        type: content['fabrica-io'].type as deviceTypes,
-        category: content['fabrica-io'].category,
-        libname: content['fabrica-io'].libname,
-        includes: content['fabrica-io'].includes,
-        description: content['fabrica-io'].description,
-        constructor: content['fabrica-io'].constructor,
-        constructor_used: 0,
-        repo: content.repository.url,
-      })
+      const content = window.atob(data.content)
+      addDevice(content)
     })
     .catch((error) => {
       console.error('There was a problem with the fetch operation:', error)
@@ -93,10 +116,77 @@ function importRepo() {
   // Eventually will save added devices to local database
 }
 
+// Import devices json from online database
+function importDevices() {
+  console.log('Importing devices from web database')
+  fetch('https://fabrica-io.azurewebsites.net/api/device')
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok ' + response.statusText)
+      }
+      return response.json()
+    })
+    .then((data) => {
+      console.log('Device JSON data:', data)
+      data.forEach((device: unknown) => {
+        if (typeof device === 'object' && device !== null && 'deviceJson' in device) {
+          addDevice((device as { deviceJson: string }).deviceJson)
+        }
+      })
+      const devices = {
+        timestamp: Date.now(),
+        devices: data,
+      }
+      try {
+        $q.localStorage.set('devices', JSON.stringify(devices))
+      } catch (e) {
+        // data wasn't successfully saved due to
+        // a Web Storage API error
+        console.log(e)
+      }
+    })
+}
+
+// Add device to side bar from JSON string
+function addDevice(deviceJson: string) {
+  const content = JSON.parse(deviceJson)
+  console.log('Device JSON data:', content)
+  // Check if device exists
+  if (devicesList.value.some((d) => d.name == content['fabricaio'].name)) {
+    const device_index = devicesList.value.findIndex((d) => d.name == content['fabricaio'].name)
+    // Update current device
+    if (device_index !== -1 && devicesList.value[device_index]) {
+      devicesList.value[device_index].name = content['fabricaio'].name
+      devicesList.value[device_index].type = content['fabricaio'].type as deviceTypes
+      devicesList.value[device_index].category = content['fabricaio'].category
+      devicesList.value[device_index].libname = content['fabricaio'].libname
+      devicesList.value[device_index].includes = content['fabricaio'].includes
+      devicesList.value[device_index].description = content['fabricaio'].description
+      devicesList.value[device_index].constructor = content['fabricaio'].constructor
+      devicesList.value[device_index].constructor_used = 0
+      devicesList.value[device_index].repo = content.repository.url
+    }
+  } else {
+    // Add new device
+    devicesList.value.unshift({
+      name: content['fabricaio'].name,
+      type: content['fabricaio'].type as deviceTypes,
+      category: content['fabricaio'].category,
+      libname: content['fabricaio'].libname,
+      includes: content['fabricaio'].includes,
+      description: content['fabricaio'].description,
+      constructor: content['fabricaio'].constructor,
+      constructor_used: 0,
+      repo: content.repository.url,
+    })
+  }
+}
+
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value
 }
 </script>
+
 <style lang="sass" scoped>
 .my-button
   margin-left: 1em
