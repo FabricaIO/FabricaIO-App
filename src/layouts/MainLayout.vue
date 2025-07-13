@@ -206,6 +206,9 @@ function addDevice(deviceJson: string) {
       repo: content.repository.url,
     })
   }
+  devicesList.value.sort(function (a, b) {
+    return a.name.localeCompare(b.name, undefined, { numeric: true })
+  })
 }
 
 function toggleLeftDrawer() {
