@@ -21,8 +21,6 @@ You can download the appropriate version of the app from our [releases](https://
 ### Install the dependencies
 
 ```bash
-yarn
-# or
 npm install
 ```
 
