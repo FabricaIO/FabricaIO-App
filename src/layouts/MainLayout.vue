@@ -145,7 +145,7 @@ function importRepo() {
 // Import devices from online database
 function importDevices() {
   console.log('Importing devices from web database')
-  fetch('https://fabrica-io.net/api/device')
+  fetch('https://fabrica-io.azurewebsites.net/api/device')
     .then((response) => {
       if (!response.ok) {
         throw new Error('Network response was not ok ' + response.statusText)
