@@ -359,6 +359,7 @@
           size="md"
           color="primary"
           :indeterminate="progressValue === 0"
+          :instant-feedback="true"
         />
       </q-card-section>
       <q-card-actions align="right">
@@ -529,7 +530,7 @@ const handleOTAUpload = async () => {
   const dirChar = window.shell.platform === 'win32' ? '\\' : '/'
   const firmwarePath = `${getProjectDir()}${dirChar}.pio${dirChar}build${dirChar}${selectedBoard.value?.value}${dirChar}firmware.bin`
   if (!(await window.fileops.fileExists(firmwarePath))) {
-    createDialog('Error', 'Firmware not found, run build first')
+    createDialog('Error', 'Firmware file not found, run build first')
     return
   }
   try {
@@ -538,36 +539,51 @@ const handleOTAUpload = async () => {
     progressValue.value = 0
 
     const firmware = await window.fileops.readBinaryFile(firmwarePath)
-    const firmwareArray = Array.from(new Uint8Array(firmware))
+    const blob = new Blob([firmware])
+    const formData = new FormData()
+    formData.append('firmware', blob, 'firmware.bin')
 
-    const response = await window.ota.uploadFirmware({
-      firmware: firmwareArray,
-      deviceAddress: deviceAddress.value,
-      username: deviceUsername.value,
-      password: devicePassword.value,
-      onProgress: (loaded: number, total: number) => {
-        console.log('Upload progress: ' + String(loaded / total))
-        progressValue.value = loaded / total
-        OTAMessage.value = `Uploading: ${Math.round(progressValue.value * 100)}%`
-      },
+    // Create XMLHttpRequest to track upload progress
+    const xhr = new XMLHttpRequest()
+
+    // Create promise to handle the upload
+    const uploadPromise = new Promise((resolve, reject) => {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          progressValue.value = event.loaded / event.total
+          OTAMessage.value = `Uploading: ${Math.ceil(progressValue.value * 100)}%`
+        }
+      }
+
+      xhr.onload = () => {
+        if (xhr.response != 'OK' || xhr.status != 202) {
+          reject(new Error(`HTTP error! status: ${xhr.status}`))
+        } else {
+          resolve(xhr.response)
+        }
+      }
+
+      xhr.onerror = () => {
+        reject(new Error('Upload failed'))
+      }
     })
 
-    if (response.success) {
-      progressValue.value = 1
-      OTAMessage.value = 'Update successful! Device is rebooting...'
-    } else {
-      // Handle the error object directly
-      OTAMessage.value = `Error: ${response.error || 'Upload failed'}`
-      progressValue.value = 0
-    }
+    // Configure and send request
+    xhr.open('POST', `http://${deviceAddress.value}/update`)
+    xhr.setRequestHeader(
+      'Authorization',
+      'Basic ' + btoa(`${deviceUsername.value}:${devicePassword.value}`),
+    )
+    xhr.send(formData)
+
+    // Wait for upload to complete
+    await uploadPromise
+
+    progressValue.value = 1
+    OTAMessage.value = 'Update successful! Device is rebooting...'
   } catch (error) {
-    // Handle both Error objects and error response objects
-    if (error && typeof error === 'object' && 'error' in error) {
-      console.log(error.error)
-      OTAMessage.value = `Error: ${error.error}`
-    } else {
-      OTAMessage.value = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }
+    console.error('OTA Update error:', error)
+    OTAMessage.value = `Error: ${error instanceof Error ? error.message : 'Upload failed'}`
     progressValue.value = 0
   }
 }

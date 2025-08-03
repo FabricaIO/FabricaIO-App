@@ -37,14 +37,5 @@ declare global {
       >
       flashFirmware: (data: { port: string; baud: string; projPath: string }) => Promise<boolean>
     }
-    ota: {
-      uploadFirmware: (options: {
-        firmware: number[]
-        deviceAddress: string
-        username: string
-        password: string
-        onProgress: (loaded: number, total: number) => void
-      }) => Promise<{ success: boolean; error?: string }>
-    }
   }
 }
