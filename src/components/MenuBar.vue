@@ -413,6 +413,10 @@ const boards = ref([
     name: 'adafruit_qtpy_esp32s3_n4r2',
     label: 'Adafruit QT Py ESP32-S3 (4M Flash 2M PSRAM)',
   },
+  {
+    name: 'adafruit_qtpy_esp32c3',
+    label: 'Adafruit QT Py ESP32-C3',
+  },
 ])
 
 // Options for board dropdown selector
