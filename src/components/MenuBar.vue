@@ -407,7 +407,7 @@ const boards = ref([
   },
   {
     name: 'lolin_s3',
-    label: 'WEMOS LOLIN S3 PRO',
+    label: 'WEMOS LOLIN S3',
   },
   {
     name: 'adafruit_qtpy_esp32s3_n4r2',
