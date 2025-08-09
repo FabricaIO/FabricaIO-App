@@ -8,7 +8,7 @@
       <q-separator dark />
       <q-card-actions>
         <q-btn class="add-device" @click="addDevice(props)">Add to Project</q-btn>
-        <q-btn @click="openRepo(repo)" flat> Repository </q-btn>
+        <q-btn @click="openRepo(repo)" flat> Details </q-btn>
       </q-card-actions>
     </q-card>
   </div>

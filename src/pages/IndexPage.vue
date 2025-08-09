@@ -15,8 +15,8 @@
           <q-tab
             v-for="(overload, index) in device.constructor"
             :key="'tab' + index"
-            :label="'Parameters ' + (index + 1)"
-            :name="'parameters' + index"
+            :label="'Constructor ' + (index + 1)"
+            :name="'constructor' + index"
           />
         </q-tabs>
         <q-separator dark />
@@ -28,13 +28,13 @@
             <q-separator dark />
             <q-card-actions>
               <q-btn @click="removeDevice(device.name)" color="red"> Remove Device </q-btn>
-              <q-btn @click="openRepo(device.repo)" flat> Repository </q-btn>
+              <q-btn @click="openRepo(device.repo)" flat> Details </q-btn>
             </q-card-actions>
           </q-tab-panel>
           <q-tab-panel
             v-for="(overload, index) in device.constructor"
             v-bind:key="'param' + String(index)"
-            :name="'parameters' + String(index)"
+            :name="'constructor' + String(index)"
           >
             <q-radio
               :key="'constructor_sel_' + index"
@@ -57,12 +57,12 @@
               dense
             />
             <q-input
-              v-for="parameter in overload"
+              v-for="constructor in overload"
               class="my-input"
-              :key="device.name + parameter.name + index"
+              :key="device.name + constructor.name + index"
               type="text"
-              v-model="parameter.default"
-              :label="parameter.name"
+              v-model="constructor.default"
+              :label="constructor.name"
               outlined
               dense
             />
@@ -85,7 +85,7 @@ const tabs = reactive<{ [key: string]: string }>({})
 watchEffect(() => {
   current_project.value.devices.forEach((device) => {
     if (!tabs[device.name]) {
-      tabs[device.name] = 'parameters'
+      tabs[device.name] = 'constructors'
     }
   })
 })
