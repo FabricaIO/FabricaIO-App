@@ -35,7 +35,7 @@
               <q-item-section side class="menu-icon">
                 <q-icon name="install_desktop" />
               </q-item-section>
-              <q-item-section>Setup Project Folder</q-item-section>
+              <q-item-section>Setup Project Directory</q-item-section>
             </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="exportProject">
