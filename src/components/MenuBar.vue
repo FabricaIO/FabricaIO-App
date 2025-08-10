@@ -31,6 +31,12 @@
               </q-item-section>
               <q-item-section>Open Project Directory</q-item-section>
             </q-item>
+            <q-item clickable v-close-popup @click="setupProjectDir">
+              <q-item-section side class="menu-icon">
+                <q-icon name="install_desktop" />
+              </q-item-section>
+              <q-item-section>Setup Project Folder</q-item-section>
+            </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="exportProject">
               <q-item-section side class="menu-icon">
@@ -676,6 +682,48 @@ const loadProjectDir = async () => {
     await deleteContainer()
   } else {
     console.log('No file selected')
+  }
+}
+
+// Sets up a project directory by downloading repository contents
+const setupProjectDir = async () => {
+  if (getProjectDir() === '') {
+    createDialog('Error', 'No project directory selected')
+    return
+  }
+  try {
+    buildInProgress.value = true
+    const outputElement = document.getElementById('build-output')
+    if (outputElement) {
+      outputElement.textContent = 'Downloading project template...\n'
+    }
+
+    const zipData = await window.networkops.fetchGithubZip('FabricaIO/FabricaIO-esp32hub')
+    const tempPath = await window.fileops.getTempFile('fabricaio-template.zip')
+
+    // Save zip file
+    await window.fileops.writeBinaryFile(tempPath, zipData)
+
+    if (outputElement) {
+      outputElement.textContent += 'Extracting files...\n'
+    }
+
+    // Extract zip to project directory
+    await window.fileops.extractZip(tempPath, getProjectDir())
+
+    // Delete temp file
+    await window.fileops.delete(tempPath)
+
+    if (outputElement) {
+      outputElement.textContent += 'Project setup complete!\n'
+    }
+
+    buildInProgress.value = false
+    createDialog('Success', 'Project directory setup complete!')
+  } catch (error) {
+    console.error('Error setting up project:', error)
+    createDialog('Error', 'Failed to setup project directory: ' + error)
+    buildInProgress.value = false
   }
 }
 

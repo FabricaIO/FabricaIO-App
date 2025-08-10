@@ -6,6 +6,7 @@ import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
 import { exec, spawn } from 'child_process'
 import { SerialPort } from 'serialport'
+import AdmZip from 'adm-zip'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -136,6 +137,19 @@ ipcMain.handle(
   },
 )
 
+ipcMain.handle(
+  'write-binary-file',
+  async (event, data: { path: string; buffer: ArrayBuffer }): Promise<boolean> => {
+    try {
+      await fs.writeFile(path.normalize(data.path), Buffer.from(data.buffer), { flag: 'w+' })
+      return true
+    } catch (error) {
+      console.error('Error writing binary file:', error)
+      return false
+    }
+  },
+)
+
 ipcMain.handle('make-dir', async (event, data: string): Promise<boolean> => {
   try {
     await fs.mkdir(path.normalize(data), { recursive: true })
@@ -144,6 +158,61 @@ ipcMain.handle('make-dir', async (event, data: string): Promise<boolean> => {
     return false
   }
 })
+
+ipcMain.handle('delete', async (event, data: string): Promise<boolean> => {
+  try {
+    await fs.rm(path.normalize(data), { recursive: true })
+    return true
+  } catch {
+    return false
+  }
+})
+
+ipcMain.handle('get-temp-file', async (event, filename: string): Promise<string> => {
+  const tmpDir = os.tmpdir()
+  const timestamp = Date.now()
+  const tempFile = path.normalize(path.join(tmpDir, `${timestamp}-${filename}`))
+  return tempFile
+})
+
+// Extracts a zip file, removing the contents from the root directory inside the zip file
+ipcMain.handle(
+  'extract-zip',
+  async (event, data: { zipPath: string; targetPath: string }): Promise<boolean> => {
+    try {
+      const zip = new AdmZip(path.normalize(data.zipPath))
+      const zipEntries = zip.getEntries()
+
+      const firstEntry = zipEntries[0]
+      if (!firstEntry || !firstEntry.entryName) {
+        // Zip file is empty
+        return false
+      }
+      const rootFolder = firstEntry.entryName.split('/')[0]
+
+      // Extract all entries, removing the root folder from paths
+      for (const entry of zipEntries) {
+        const relativePath = entry.entryName.replace(rootFolder + '/', '')
+        if (relativePath && !entry.isDirectory) {
+          const content = entry.getData()
+          const targetFile = path.normalize(path.join(data.targetPath, relativePath))
+          const targetDir = path.dirname(path.normalize(targetFile))
+
+          // Ensure target directory exists
+          await fs.mkdir(targetDir, { recursive: true })
+
+          // Write file
+          await fs.writeFile(targetFile, content)
+        }
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error extracting zip:', error)
+      return false
+    }
+  },
+)
 
 // Shell command IPCs
 ipcMain.handle('execute', async (_event, args) => {
@@ -254,4 +323,18 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
       return false
     }
   })
+})
+
+ipcMain.handle('fetch-github-zip', async (event, repoPath: string): Promise<ArrayBuffer> => {
+  try {
+    const response = await fetch(`https://api.github.com/repos/${repoPath}/zipball/main`)
+    if (!response.ok) {
+      throw new Error('Failed to download repository')
+    }
+    const arrayBuffer = await response.arrayBuffer()
+    return arrayBuffer
+  } catch (error) {
+    console.error('Error fetching GitHub zip: ', error)
+    throw error
+  }
 })

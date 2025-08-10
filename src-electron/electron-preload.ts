@@ -42,7 +42,18 @@ contextBridge.exposeInMainWorld('fileops', {
     ipcRenderer.invoke('read-binary-file', path),
   writeFile: (path: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke('write-file', { path, content }),
+  writeBinaryFile: (path: string, buffer: ArrayBuffer): Promise<boolean> =>
+    ipcRenderer.invoke('write-binary-file', { path, buffer }),
   makeDir: (path: string): Promise<boolean> => ipcRenderer.invoke('make-dir', path),
+  delete: (path: string): Promise<boolean> => ipcRenderer.invoke('delete', path),
+  extractZip: (zipPath: string, targetPath: string) =>
+    ipcRenderer.invoke('extract-zip', { zipPath, targetPath }),
+  getTempFile: (filename: string): Promise<string> => ipcRenderer.invoke('get-temp-file', filename),
+})
+
+contextBridge.exposeInMainWorld('networkops', {
+  fetchGithubZip: (repoPath: string): Promise<ArrayBuffer> =>
+    ipcRenderer.invoke('fetch-github-zip', repoPath),
 })
 
 contextBridge.exposeInMainWorld('shell', {

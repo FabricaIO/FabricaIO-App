@@ -8,7 +8,14 @@ declare global {
       readFile: (path: string) => Promise<string>
       readBinaryFile: (path: string) => Promise<ArrayBuffer>
       writeFile: (path: string, content: string) => Promise<boolean>
+      writeBinaryFile: (path: string, buffer: ArrayBuffer) => Promise<boolean>
       makeDir: (path: string) => Promise<boolean>
+      extractZip: (zipPath: string, targetPath: string) => Promise<boolean>
+      delete: (path: string) => Promise<boolean>
+      getTempFile: (filename: string) => Promise<string>
+    }
+    networkops: {
+      fetchGithubZip: (repoPath: string) => Promise<ArrayBuffer>
     }
     myWindowAPI: {
       minimize: () => Promise<void>
