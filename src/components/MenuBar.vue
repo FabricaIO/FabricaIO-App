@@ -693,30 +693,17 @@ const setupProjectDir = async () => {
   }
   try {
     buildInProgress.value = true
-    const outputElement = document.getElementById('build-output')
-    if (outputElement) {
-      outputElement.textContent = 'Downloading project template...\n'
-    }
-
     const zipData = await window.networkops.fetchGithubZip('FabricaIO/FabricaIO-esp32hub')
     const tempPath = await window.fileops.getTempFile('fabricaio-template.zip')
 
     // Save zip file
     await window.fileops.writeBinaryFile(tempPath, zipData)
 
-    if (outputElement) {
-      outputElement.textContent += 'Extracting files...\n'
-    }
-
     // Extract zip to project directory
     await window.fileops.extractZip(tempPath, getProjectDir())
 
     // Delete temp file
     await window.fileops.delete(tempPath)
-
-    if (outputElement) {
-      outputElement.textContent += 'Project setup complete!\n'
-    }
 
     buildInProgress.value = false
     createDialog('Success', 'Project directory setup complete!')
