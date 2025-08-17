@@ -7,6 +7,14 @@ import fs from 'fs/promises'
 import { exec, spawn } from 'child_process'
 import { SerialPort } from 'serialport'
 import AdmZip from 'adm-zip'
+import electronUpdater, { type AppUpdater } from 'electron-updater'
+
+export function getAutoUpdater(): AppUpdater {
+  // Using destructuring to access autoUpdater due to the CommonJS module of 'electron-updater'.
+  // It is a workaround for ESM compatibility issues, see https://github.com/electron-userland/electron-builder/issues/7976.
+  const { autoUpdater } = electronUpdater
+  return autoUpdater
+}
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -59,6 +67,8 @@ function createWindow() {
       mainWindow?.webContents.closeDevTools()
     })
   }
+  getAutoUpdater().logger = console
+  getAutoUpdater().checkForUpdatesAndNotify()
 
   mainWindow.on('closed', () => {
     mainWindow = undefined

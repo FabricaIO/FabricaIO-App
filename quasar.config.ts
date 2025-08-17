@@ -204,6 +204,7 @@ export default defineConfig((/* ctx */) => {
               arch: ['universal'],
             },
           ],
+          publish: ['github'],
         },
         linux: {
           target: [
@@ -220,6 +221,7 @@ export default defineConfig((/* ctx */) => {
               arch: ['x64'],
             },
           ],
+          publish: ['github'],
         },
         deb: {
           category: 'Utility',
@@ -266,6 +268,7 @@ export default defineConfig((/* ctx */) => {
           publisherName: 'Fabrica-IO',
           forceCodeSigning: false,
           verifyUpdateCodeSignature: false,
+          publish: ['github'],
         },
       },
     },

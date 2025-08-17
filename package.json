@@ -1,6 +1,6 @@
 {
   "name": "fabricaio-app",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "App for configuring Fabrica-IO devices",
   "productName": "Fabrica-IO App",
   "author": "Sam Groveman <Groveman@fabrica-io.com>",
@@ -20,6 +20,7 @@
     "@quasar/extras": "^1.16.4",
     "@types/adm-zip": "^0.5.7",
     "adm-zip": "^0.5.16",
+    "electron-updater": "^6.6.2",
     "quasar": "^2.16.0",
     "remove": "^0.1.5",
     "serialport": "^13.0.0",
@@ -48,5 +49,9 @@
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FabricaIO/FabricaIO-App.git"
   }
 }
