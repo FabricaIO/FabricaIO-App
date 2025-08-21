@@ -30,6 +30,7 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 import { BrowserWindow } from '@electron/remote'
+import type electronUpdater from 'electron-updater'
 
 // Expose IPC functions to JavaScript
 
@@ -54,6 +55,8 @@ contextBridge.exposeInMainWorld('fileops', {
 contextBridge.exposeInMainWorld('networkops', {
   fetchGithubZip: (repoPath: string): Promise<ArrayBuffer> =>
     ipcRenderer.invoke('fetch-github-zip', repoPath),
+  checkForUpdates: (): Promise<electronUpdater.UpdateCheckResult | null> =>
+    ipcRenderer.invoke('check-for-updates'),
 })
 
 contextBridge.exposeInMainWorld('shell', {

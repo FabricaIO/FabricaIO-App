@@ -67,12 +67,17 @@ function createWindow() {
       mainWindow?.webContents.closeDevTools()
     })
   }
-  getAutoUpdater().logger = console
-  getAutoUpdater().checkForUpdatesAndNotify()
+
+  checkForUpdates()
 
   mainWindow.on('closed', () => {
     mainWindow = undefined
   })
+}
+
+function checkForUpdates(): Promise<electronUpdater.UpdateCheckResult | null> {
+  getAutoUpdater().logger = console
+  return getAutoUpdater().checkForUpdatesAndNotify()
 }
 
 app.whenReady().then(createWindow)
@@ -347,4 +352,8 @@ ipcMain.handle('fetch-github-zip', async (event, repoPath: string): Promise<Arra
     console.error('Error fetching GitHub zip: ', error)
     throw error
   }
+})
+
+ipcMain.handle('check-for-updates', async (): Promise<electronUpdater.UpdateCheckResult | null> => {
+  return await checkForUpdates()
 })

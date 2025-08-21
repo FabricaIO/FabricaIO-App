@@ -112,6 +112,26 @@
           </q-list>
         </q-menu>
       </div>
+      <div class="cursor-pointer non-selectable my-highlight">
+        <q-icon name="help" />
+        Help
+        <q-menu>
+          <q-list dense style="min-width: 100px">
+            <q-item clickable @click="openDocs">
+              <q-item-section side class="menu-icon">
+                <q-icon name="article" />
+              </q-item-section>
+              <q-item-section>Documentation</q-item-section>
+            </q-item>
+            <q-item clickable @click="checkUpdates">
+              <q-item-section side class="menu-icon">
+                <q-icon name="system_update_alt" />
+              </q-item-section>
+              <q-item-section>Check for Updates</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </div>
       <q-separator vertical spaced color="white" />
       <q-item-section>Current project folder: {{ folderText }}</q-item-section>
       <q-space />
@@ -387,6 +407,7 @@ import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
+import type electronUpdater from 'electron-updater'
 
 // Removes existing container
 const deleteContainer = async (): Promise<boolean> => {
@@ -456,6 +477,21 @@ const portOptions = ref<{ label: string; value: string }[]>([])
 const savePort = () => {
   if (portSelectMode.value === 'advanced') {
     portPath.value = customPort.value
+  }
+}
+
+const openDocs = () => {
+  window.myWindowAPI.openExternal('https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage')
+}
+
+const checkUpdates = async () => {
+  const result: electronUpdater.UpdateCheckResult = await window.networkops.checkForUpdates()
+  if (result) {
+    if (!result.isUpdateAvailable) {
+      createDialog('Success', 'No updates available')
+    }
+  } else {
+    createDialog('Error', 'Could not check for updates')
   }
 }
 

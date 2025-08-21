@@ -16,6 +16,7 @@ declare global {
     }
     networkops: {
       fetchGithubZip: (repoPath: string) => Promise<ArrayBuffer>
+      checkForUpdates: () => Promise<electronUpdater.UpdateCheckResult | null>
     }
     myWindowAPI: {
       minimize: () => Promise<void>
