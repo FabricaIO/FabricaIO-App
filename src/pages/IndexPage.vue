@@ -2,15 +2,15 @@
   <q-page class="flex flex-center">
     <div id="project" class="q-pa-md row items-start q-gutter-md">
       <q-card
-        v-for="device in current_project.devices"
-        :key="device.name"
+        v-for="(device, index) in current_project.devices"
+        :key="`${device.libname}-${index}`"
         :class="getCardClass(device.type)"
         class="my-card text-white"
       >
         <q-card-section>
           <div class="text-h6">{{ device.name }}</div>
         </q-card-section>
-        <q-tabs v-model="tabs[device.name]">
+        <q-tabs v-model="tabs[`${device.libname}-${index}`]">
           <q-tab label="Details" name="details" />
           <q-tab
             v-for="(overload, index) in device.constructor"
@@ -20,7 +20,11 @@
           />
         </q-tabs>
         <q-separator dark />
-        <q-tab-panels :class="getCardClass(device.type)" v-model="tabs[device.name]" animated>
+        <q-tab-panels
+          :class="getCardClass(device.type)"
+          v-model="tabs[`${device.libname}-${index}`]"
+          animated
+        >
           <q-tab-panel name="details">
             <q-card-section :class="getCardClass(device.type)">
               {{ device.description }}
@@ -51,8 +55,8 @@
               @update:model-value="
                 (val: string | number | null) => updateName(device.name, val?.toString() || '')
               "
-              debounce="500"
               label="Device Name"
+              :debounce="500"
               outlined
               dense
             />
@@ -83,9 +87,9 @@ const tabs = reactive<{ [key: string]: string }>({})
 
 // Watch for changes in current_project.devices and set default tab state
 watchEffect(() => {
-  current_project.value.devices.forEach((device) => {
-    if (!tabs[device.name]) {
-      tabs[device.name] = 'constructors'
+  current_project.value.devices.forEach((device, index) => {
+    if (!tabs[`${device.libname}-${index}`]) {
+      tabs[`${device.libname}-${index}`] = 'constructors'
     }
   })
 })
@@ -113,6 +117,16 @@ const openRepo = (url: string) => {
 
 // Checks if a device name already exists in the project
 const updateName = (oldName: string, newName: string) => {
+  if (newName === '') {
+    Dialog.create({
+      title: 'Error',
+      message: `Device name cannot be blank`,
+      ok: {
+        flat: true,
+      },
+    })
+    return
+  }
   if (current_project.value.devices.some((device) => device.name === newName)) {
     Dialog.create({
       title: 'Error',
