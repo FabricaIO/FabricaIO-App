@@ -52,6 +52,10 @@ contextBridge.exposeInMainWorld('fileops', {
   getTempFile: (filename: string): Promise<string> => ipcRenderer.invoke('get-temp-file', filename),
 })
 
+contextBridge.exposeInMainWorld('reflection', {
+  getAppVersion: (): Promise<string> => ipcRenderer.invoke('get-app-version'),
+})
+
 contextBridge.exposeInMainWorld('networkops', {
   fetchGithubZip: (repoPath: string): Promise<ArrayBuffer> =>
     ipcRenderer.invoke('fetch-github-zip', repoPath),

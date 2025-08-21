@@ -14,6 +14,9 @@ declare global {
       delete: (path: string) => Promise<boolean>
       getTempFile: (filename: string) => Promise<string>
     }
+    reflection: {
+      getAppVersion: () => Promise<string>
+    }
     networkops: {
       fetchGithubZip: (repoPath: string) => Promise<ArrayBuffer>
       checkForUpdates: () => Promise<electronUpdater.UpdateCheckResult | null>

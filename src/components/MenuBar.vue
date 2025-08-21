@@ -117,6 +117,12 @@
         Help
         <q-menu>
           <q-list dense style="min-width: 100px">
+            <q-item>
+              <q-item-section side class="menu-icon">
+                <q-icon name="code" />
+              </q-item-section>
+              <q-item-section>Version {{ appVersion }} </q-item-section>
+            </q-item>
             <q-item clickable @click="openDocs">
               <q-item-section side class="menu-icon">
                 <q-icon name="article" />
@@ -408,6 +414,9 @@ import { deviceTypes } from 'components/FabricaIODevice.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
 import type electronUpdater from 'electron-updater'
+
+// App version ref
+const appVersion = ref('')
 
 // Removes existing container
 const deleteContainer = async (): Promise<boolean> => {
@@ -709,23 +718,29 @@ const getBoardLabel = (boardId: string): string => {
 }
 
 // Lets user select the project directory
-const loadProjectDir = async () => {
+const loadProjectDir = async (): Promise<boolean> => {
   const result = await window.fileops.getProjectDir()
   if (!result.canceled) {
     setProjectDir(result.filePaths[0] || '')
     folderText.value = result.filePaths[0] || 'None selected'
+    if (!result.filePaths[0]) {
+      return false
+    }
     // Need to remove previous containers if folder has changed
     await deleteContainer()
+    return true
   } else {
-    console.log('No file selected')
+    console.log('No folder selected')
+    return false
   }
 }
 
 // Sets up a project directory by downloading repository contents
 const setupProjectDir = async () => {
   if (getProjectDir() === '') {
-    createDialog('Error', 'No project directory selected')
-    return
+    if (!(await loadProjectDir())) {
+      return
+    }
   }
   try {
     buildInProgress.value = true
@@ -1105,7 +1120,8 @@ const createDialog = (title: string, message: string) => {
 }
 
 // Receives output from build process
-onMounted(() => {
+onMounted(async () => {
+  appVersion.value = await window.reflection.getAppVersion()
   // Register the event handler
   window.shell.onBuildOutput((data: string) => {
     const outputElement = document.getElementById('build-output')

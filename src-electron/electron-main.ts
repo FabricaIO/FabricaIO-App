@@ -357,3 +357,7 @@ ipcMain.handle('fetch-github-zip', async (event, repoPath: string): Promise<Arra
 ipcMain.handle('check-for-updates', async (): Promise<electronUpdater.UpdateCheckResult | null> => {
   return await checkForUpdates()
 })
+
+ipcMain.handle('get-app-version', async (): Promise<string> => {
+  return app.getVersion()
+})
