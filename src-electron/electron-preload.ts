@@ -37,6 +37,18 @@ import type electronUpdater from 'electron-updater'
 contextBridge.exposeInMainWorld('fileops', {
   getProjectDir: (): Promise<Electron.OpenDialogReturnValue> =>
     ipcRenderer.invoke('open-directory-dialog'),
+  getFile: (
+    extension: string,
+    typeName: string,
+    path = '',
+  ): Promise<Electron.OpenDialogReturnValue> =>
+    ipcRenderer.invoke('open-file-dialog', extension, typeName, path),
+  saveFile: (
+    extension: string,
+    typeName: string,
+    path = '',
+  ): Promise<Electron.SaveDialogReturnValue> =>
+    ipcRenderer.invoke('save-file-dialog', extension, typeName, path),
   fileExists: (path: string): Promise<boolean> => ipcRenderer.invoke('file-exists', path),
   readFile: (path: string): Promise<string> => ipcRenderer.invoke('read-file', path),
   readBinaryFile: (path: string): Promise<ArrayBuffer> =>

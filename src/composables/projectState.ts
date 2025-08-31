@@ -35,6 +35,9 @@ const getProjectDir = (): string => {
   return project_dir
 }
 
+// Holds project save file path
+const projectSaveFile = ref<string>('')
+
 // Adds a device to the current project
 const addDevice = (device: FabricaIODeviceProps) => {
   const deviceExists = current_project.value.devices.some(
@@ -75,4 +78,12 @@ const loadProject = (project: string): boolean => {
   return true
 }
 
-export { getProjectDir, setProjectDir, current_project, addDevice, removeDevice, loadProject }
+export {
+  getProjectDir,
+  setProjectDir,
+  current_project,
+  projectSaveFile,
+  addDevice,
+  removeDevice,
+  loadProject,
+}

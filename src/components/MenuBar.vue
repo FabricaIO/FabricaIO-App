@@ -38,11 +38,17 @@
               <q-item-section>Setup Project Directory</q-item-section>
             </q-item>
             <q-separator />
-            <q-item clickable v-close-popup @click="exportProject">
+            <q-item clickable v-close-popup @click="exportProject(false)">
               <q-item-section side class="menu-icon">
                 <q-icon name="save" />
               </q-item-section>
               <q-item-section>Save Project</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="exportProject(true)">
+              <q-item-section side class="menu-icon">
+                <q-icon name="save_as" />
+              </q-item-section>
+              <q-item-section>Save Project As</q-item-section>
             </q-item>
             <q-item clickable v-close-popup @click="importProject">
               <q-item-section side class="menu-icon">
@@ -407,6 +413,7 @@ import {
   getProjectDir,
   current_project,
   loadProject,
+  projectSaveFile,
 } from 'src/composables/projectState'
 import 'components/FabricaIODevice.vue'
 import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
@@ -735,6 +742,35 @@ const loadProjectDir = async (): Promise<boolean> => {
   }
 }
 
+// Lets user select a file to load project from
+const loadProjectfile = async (): Promise<boolean> => {
+  const result = await window.fileops.getFile('json', 'Fabrica-IO Project', getProjectDir())
+  if (!result.canceled) {
+    if (!result.filePaths[0]) {
+      return false
+    }
+    projectSaveFile.value = result.filePaths[0]
+    return true
+  }
+  return false
+}
+
+// Lets user select a file to save roject as
+const saveProjectfile = async (): Promise<boolean> => {
+  const result = await window.fileops.saveFile('json', 'Fabrica-IO Project', getProjectDir())
+  if (!result.canceled) {
+    if (!result.filePath) {
+      return false
+    }
+    projectSaveFile.value = result.filePath
+    if (!projectSaveFile.value.endsWith('.json')) {
+      projectSaveFile.value += '.json'
+    }
+    return true
+  }
+  return false
+}
+
 // Sets up a project directory by downloading repository contents
 const setupProjectDir = async () => {
   if (getProjectDir() === '') {
@@ -766,25 +802,22 @@ const setupProjectDir = async () => {
 }
 
 // Exports a project as a JSON
-const exportProject = async () => {
-  if (getProjectDir() === '') {
-    createDialog('Error', 'No project directory selected')
-    return
+const exportProject = async (force: boolean) => {
+  if (projectSaveFile.value === '' || force) {
+    if (!(await saveProjectfile())) {
+      return
+    }
   }
-  window.fileops.writeFile(
-    getProjectDir() + '/fabricaio.json',
-    JSON.stringify(current_project.value),
-  )
+  window.fileops.writeFile(projectSaveFile.value, JSON.stringify(current_project.value))
   createDialog('Success', 'Project saved!')
 }
 
 // Loads a project from JSON file
 const importProject = async () => {
-  if (getProjectDir() === '') {
-    createDialog('Error', 'No project directory selected')
+  if (!(await loadProjectfile())) {
     return
   }
-  loadProject(await window.fileops.readFile(getProjectDir() + '/fabricaio.json'))
+  loadProject(await window.fileops.readFile(projectSaveFile.value))
   if (!(current_project.value.board in boards.value)) {
     boardSelectMode.value = 'custom'
     customBoard.value = current_project.value.board
