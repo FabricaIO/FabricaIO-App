@@ -99,7 +99,7 @@ ipcMain.handle('open-external', async (event, data: string) => {
   shell.openExternal(data)
 })
 
-// Handle IPC events for file operations
+// Handle IPC events for opening a directory
 ipcMain.handle('open-directory-dialog', async (): Promise<Electron.OpenDialogReturnValue> => {
   if (mainWindow) {
     const result = await dialog.showOpenDialog(mainWindow, {
@@ -109,6 +109,47 @@ ipcMain.handle('open-directory-dialog', async (): Promise<Electron.OpenDialogRet
   }
   return { canceled: true, filePaths: [] }
 })
+
+// Handle IPC events for opening a file
+ipcMain.handle(
+  'open-file-dialog',
+  async (
+    event,
+    extension: string,
+    typeName: string,
+    path = '',
+  ): Promise<Electron.OpenDialogReturnValue> => {
+    if (mainWindow) {
+      const result = await dialog.showOpenDialog(mainWindow, {
+        defaultPath: path,
+        properties: ['openFile'],
+        filters: [{ name: typeName, extensions: [extension] }],
+      })
+      return result
+    }
+    return { canceled: true, filePaths: [] }
+  },
+)
+
+// Handle IPC events for saving a file
+ipcMain.handle(
+  'save-file-dialog',
+  async (
+    event,
+    extension: string,
+    typeName: string,
+    path = '',
+  ): Promise<Electron.SaveDialogReturnValue> => {
+    if (mainWindow) {
+      const result = await dialog.showSaveDialog(mainWindow, {
+        defaultPath: path,
+        filters: [{ name: typeName, extensions: [extension] }],
+      })
+      return result
+    }
+    return { canceled: true, filePath: '' }
+  },
+)
 
 ipcMain.handle('file-exists', async (event, data: string): Promise<boolean> => {
   try {

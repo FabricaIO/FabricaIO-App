@@ -4,6 +4,16 @@ declare global {
   interface Window {
     fileops: {
       getProjectDir: () => Promise<Electron.OpenDialogReturnValue>
+      getFile: (
+        extension: string,
+        typeName: string,
+        path = '',
+      ) => Promise<Electron.OpenDialogReturnValue>
+      saveFile: (
+        extension: string,
+        typeName: string,
+        path = '',
+      ) => Promise<Electron.SaveDialogReturnValue>
       fileExists: (path: string) => Promise<boolean>
       readFile: (path: string) => Promise<string>
       readBinaryFile: (path: string) => Promise<ArrayBuffer>
