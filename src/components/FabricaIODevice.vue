@@ -22,6 +22,7 @@ export interface FabricaIODeviceProps {
   name: string
   type: deviceTypes
   category: string
+  keywords: string
   libname: string
   includes: string[]
   description: string

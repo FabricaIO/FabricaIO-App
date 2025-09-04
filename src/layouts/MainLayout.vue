@@ -16,6 +16,26 @@
           @click="refreshDevices"
           label="Refresh"
         />
+        <q-select
+          v-model="selectedCategories"
+          :options="availableCategories"
+          filled
+          multiple
+          class="filter-select"
+          label="Categories"
+          emit-value
+          map-options
+        />
+        <q-select
+          v-model="selectedKeywords"
+          :options="availableKeywords"
+          filled
+          multiple
+          class="filter-select"
+          label="Tags"
+          emit-value
+          map-options
+        />
         <q-input
           v-model="search"
           debounce="150"
@@ -99,15 +119,84 @@ function refreshDevices() {
 // Contents of search bar
 const search = ref('')
 
-// Filter device list by search term
+// Selected categories
+const selectedCategories = ref<string[]>([])
+
+// Selected keywords (tags)
+const selectedKeywords = ref<string[]>([])
+
+const availableCategories = computed(() => {
+  const categories = new Map<string, string>()
+  devicesList.value.forEach((device) => {
+    const lowerCategory = device.category.toLowerCase()
+    if (!categories.has(lowerCategory)) {
+      categories.set(lowerCategory, device.category)
+    }
+  })
+  return Array.from(categories.values())
+    .map((category) => ({
+      label: category.toLowerCase(),
+      value: category.toLowerCase(),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+})
+
+const availableKeywords = computed(() => {
+  const keywords = new Map<string, string>()
+  devicesList.value.forEach((device) => {
+    if (typeof device.keywords === 'string') {
+      device.keywords.split(',').forEach((keyword) => {
+        const trimmedKeyword = keyword.trim()
+        const lowerKeyword = trimmedKeyword.toLowerCase()
+        if (lowerKeyword !== 'fabrica-io') {
+          if (!keywords.has(lowerKeyword)) {
+            keywords.set(lowerKeyword, trimmedKeyword)
+          }
+        }
+      })
+    }
+  })
+  return Array.from(keywords.values())
+    .map((keyword) => ({
+      label: keyword.toLowerCase(),
+      value: keyword.toLowerCase(),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+})
+
+// Filter the devices displayed
 const filteredDevices = computed(() => {
+  let filtered = devicesList.value
+
+  // Filter by search term
   const searchTerm = search.value.toLowerCase()
-  if (!searchTerm) return devicesList.value
-  return devicesList.value.filter(
-    (device) =>
-      device.name.toLowerCase().includes(searchTerm) ||
-      device.description.toLowerCase().includes(searchTerm),
-  )
+  if (searchTerm) {
+    filtered = filtered.filter(
+      (device) =>
+        device.name.toLowerCase().includes(searchTerm) ||
+        device.description.toLowerCase().includes(searchTerm),
+    )
+  }
+
+  // Filter by selected categories
+  if (selectedCategories.value.length > 0) {
+    filtered = filtered.filter((device) =>
+      selectedCategories.value.includes(device.category.toLowerCase()),
+    )
+  }
+
+  // Filter by selected keywords
+  if (selectedKeywords.value.length > 0) {
+    filtered = filtered.filter((device) => {
+      if (typeof device.keywords !== 'string') return false
+      const deviceKeywords = device.keywords.split(',').map((k) => k.trim().toLowerCase())
+      return selectedKeywords.value.some((keyword) =>
+        deviceKeywords.includes(keyword.toLowerCase()),
+      )
+    })
+  }
+
+  return filtered
 })
 
 // Imports GitHub repo as device
@@ -198,6 +287,7 @@ function addDevice(deviceJson: string) {
       name: content['fabricaio'].name,
       type: content['fabricaio'].type as deviceTypes,
       category: content['fabricaio'].category,
+      keywords: content['keywords'],
       libname: content['fabricaio'].libname,
       includes: content['fabricaio'].includes,
       description: content['fabricaio'].description,
@@ -228,4 +318,8 @@ function toggleLeftDrawer() {
   margin-top: 0.5em
   border-top: 1px solid gray
   border-bottom: 1px solid gray
+
+.filter-select
+  margin: 0.5em 1em
+  width: calc(100% - 2em)
 </style>

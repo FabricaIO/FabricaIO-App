@@ -4,7 +4,7 @@ This app is used to setup and configure you Fabrica-IO project. For details on i
 
 ## Installation
 
-Follow the [setup instructions](https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage#setup) here to install the app. If you'd like to contribute as a developer, or build from source, see the instructions below.
+Follow the [setup instructions](https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage#setup) to install the app. If you'd like to contribute as a developer, or build from source, see the instructions below.
 
 ## Developers
 
@@ -22,7 +22,7 @@ Follow the [setup instructions](https://github.com/FabricaIO/FabricaIO-App/wiki/
 npm install
 ```
 
-### Start the app in development mode or build the app for usage (this must be built in Eelectron mode)
+### Start the app in development mode or build the app for usage (this must be built in Electron mode)
 
 ```bash
 quasar dev -m electron
