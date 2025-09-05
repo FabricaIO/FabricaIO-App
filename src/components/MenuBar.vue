@@ -1062,9 +1062,6 @@ const compileWithDocker = async (): Promise<boolean> => {
         'Docker Missing',
         'Docker not installed. Please ensure Docker is properly installed accessible before building. For Linux, check if your user need to be in the Docker group.',
       )
-      window.myWindowAPI.openExternal(
-        'https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage#setup',
-      )
       buildInProgress.value = false
       return false
     }
