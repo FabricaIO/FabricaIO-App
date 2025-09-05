@@ -1055,10 +1055,24 @@ const compileWithDocker = async (): Promise<boolean> => {
     buildDialogOpen.value = true
     const command = 'docker'
 
+    let success = await window.shell.execCommand(command, [])
+    if (!success) {
+      buildDialogOpen.value = false
+      createDialog(
+        'Docker Missing',
+        'Docker not installed. Please ensure Docker is properly installed accessible before building. For Linux, check if your user need to be in the Docker group.',
+      )
+      window.myWindowAPI.openExternal(
+        'https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage#setup',
+      )
+      buildInProgress.value = false
+      return false
+    }
+
     // Check if container exists
     let args = ['ps', '-a']
 
-    let success = await window.shell.execCommand(command, args)
+    success = await window.shell.execCommand(command, args)
     if (!success) {
       buildInProgress.value = false
       return false

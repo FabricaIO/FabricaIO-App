@@ -277,6 +277,11 @@ ipcMain.handle('execute', async (_event, args) => {
   return new Promise((resolve) => {
     const process = spawn(command, commandArgs)
 
+    process.on('error', (err) => {
+      console.error('Failed to start subprocess. ' + err.message)
+      resolve(false)
+    })
+
     process.stdout.on('data', (data) => {
       mainWindow?.webContents.send('build-output', data.toString())
     })
