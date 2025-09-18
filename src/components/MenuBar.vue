@@ -1055,7 +1055,7 @@ const compileWithDocker = async (): Promise<boolean> => {
     buildDialogOpen.value = true
     const command = 'docker'
 
-    let success = await window.shell.execCommand(command, [])
+    let success = await window.shell.execCommand(command, ['-v'])
     if (!success) {
       buildDialogOpen.value = false
       createDialog(
