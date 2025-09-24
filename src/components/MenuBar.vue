@@ -405,6 +405,22 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog v-model="setupDialogOpen" persistent>
+    <q-card style="min-width: 30px">
+      <q-card-section>
+        <div class="text-h6">Project Directory Setup</div>
+      </q-card-section>
+      <q-card-section class="text-center">
+        <q-spinner-orbit v-if="setupInProgress" color="primary" size="3em" />
+        <div class="text-subtitle1 q-mt-md">
+          {{ setupMessage }}
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Close" color="primary" :disable="setupInProgress" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -755,7 +771,7 @@ const loadProjectfile = async (): Promise<boolean> => {
   return false
 }
 
-// Lets user select a file to save roject as
+// Lets user select a file to save project as
 const saveProjectfile = async (): Promise<boolean> => {
   const result = await window.fileops.saveFile('json', 'Fabrica-IO Project', getProjectDir())
   if (!result.canceled) {
@@ -771,6 +787,10 @@ const saveProjectfile = async (): Promise<boolean> => {
   return false
 }
 
+const setupDialogOpen = ref(false)
+const setupMessage = ref('')
+const setupInProgress = ref(false)
+
 // Sets up a project directory by downloading repository contents
 const setupProjectDir = async () => {
   if (getProjectDir() === '') {
@@ -778,6 +798,9 @@ const setupProjectDir = async () => {
       return
     }
   }
+  setupMessage.value = 'Downloading project files...'
+  setupInProgress.value = true
+  setupDialogOpen.value = true
   try {
     buildInProgress.value = true
     const zipData = await window.networkops.fetchGithubZip('FabricaIO/FabricaIO-esp32hub')
@@ -786,17 +809,22 @@ const setupProjectDir = async () => {
     // Save zip file
     await window.fileops.writeBinaryFile(tempPath, zipData)
 
+    setupMessage.value = 'Extracting project files...'
     // Extract zip to project directory
     await window.fileops.extractZip(tempPath, getProjectDir())
 
+    setupMessage.value = 'Cleaning up temporary files...'
     // Delete temp file
     await window.fileops.delete(tempPath)
 
+    setupMessage.value = 'Project setup completed successfully!'
+    setupInProgress.value = false
     buildInProgress.value = false
-    createDialog('Success', 'Project directory setup complete!')
   } catch (error) {
-    console.error('Error setting up project:', error)
-    createDialog('Error', 'Failed to setup project directory: ' + error)
+    const error_message = `Error: ${error instanceof Error ? error.message : 'Setup failed'}`
+    console.error('Error setting up project:', error_message)
+    setupMessage.value = error_message
+    setupInProgress.value = false
     buildInProgress.value = false
   }
 }

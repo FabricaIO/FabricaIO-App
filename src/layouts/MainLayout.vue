@@ -47,6 +47,11 @@
             <q-icon name="search" />
           </template>
         </q-input>
+        <div id="spinner" v-show="isLoading">
+          <q-spinner-orbit color="primary" size="5em" />
+          <q-tooltip>Loading Devices</q-tooltip>
+        </div>
+
         <FabricaIODevice v-for="device in filteredDevices" :key="device.name" v-bind="device" />
       </q-list>
     </q-drawer>
@@ -82,6 +87,7 @@ const $q = useQuasar()
 
 // List of available devices
 const devicesList = ref<FabricaIODeviceProps[]>([])
+const isLoading = ref(false)
 
 onMounted(() => {
   if ($q.localStorage.hasItem('devices')) {
@@ -233,6 +239,7 @@ function importRepo() {
 
 // Import devices from online database
 function importDevices() {
+  isLoading.value = true
   console.log('Importing devices from web database')
   fetch('https://fabrica-io.azurewebsites.net/api/device')
     .then((response) => {
@@ -247,6 +254,7 @@ function importDevices() {
         if (typeof device === 'object' && device !== null && 'deviceJson' in device) {
           addDevice((device as { deviceJson: string }).deviceJson)
         }
+        isLoading.value = false
       })
       const devices = {
         timestamp: Date.now(),
@@ -307,6 +315,9 @@ function toggleLeftDrawer() {
 </script>
 
 <style lang="sass" scoped>
+#spinner
+  text-align: center
+
 .my-button
   margin-left: 1em
 
