@@ -89,7 +89,7 @@ const $q = useQuasar()
 const devicesList = ref<FabricaIODeviceProps[]>([])
 const isLoading = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   if ($q.localStorage.hasItem('devices')) {
     console.log('Device json found')
     const devicesStr = $q.localStorage.getItem('devices')
@@ -102,8 +102,19 @@ onMounted(() => {
             addDevice((device as { deviceJson: string }).deviceJson)
           }
         })
-        return
+      } else {
+        if (await importDevices()) {
+          console.log('Refreshed devices from web database')
+        } else {
+          console.log('Could not refresh devices from web database, local database is stale')
+          deviceList.devices.forEach((device: unknown) => {
+            if (typeof device === 'object' && device !== null && 'deviceJson' in device) {
+              addDevice((device as { deviceJson: string }).deviceJson)
+            }
+          })
+        }
       }
+      return
     }
   }
   console.log('Importing devices from web database')
@@ -238,36 +249,40 @@ function importRepo() {
 }
 
 // Import devices from online database
-function importDevices() {
+async function importDevices(): Promise<boolean> {
   isLoading.value = true
   console.log('Importing devices from web database')
-  fetch('https://fabrica-io.azurewebsites.net/api/device')
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok ' + response.statusText)
-      }
-      return response.json()
-    })
-    .then((data) => {
-      console.log('Device JSON data:', data)
-      data.forEach((device: unknown) => {
-        if (typeof device === 'object' && device !== null && 'deviceJson' in device) {
-          addDevice((device as { deviceJson: string }).deviceJson)
-        }
-        isLoading.value = false
-      })
-      const devices = {
-        timestamp: Date.now(),
-        devices: data,
-      }
-      try {
-        $q.localStorage.set('devices', JSON.stringify(devices))
-      } catch (e) {
-        // data wasn't successfully saved due to
-        // a Web Storage API error
-        console.log(e)
+  try {
+    const response = await fetch('https://fabrica-io.azurewebsites.net/api/device')
+    if (!response.ok) {
+      console.error('Network response was not ok:', response.statusText)
+      isLoading.value = false
+      return false
+    }
+    const data = await response.json()
+    console.log('Device JSON data:', data)
+    data.forEach((device: unknown) => {
+      if (typeof device === 'object' && device !== null && 'deviceJson' in device) {
+        addDevice((device as { deviceJson: string }).deviceJson)
       }
     })
+    const devices = {
+      timestamp: Date.now(),
+      devices: data,
+    }
+    try {
+      $q.localStorage.set('devices', JSON.stringify(devices))
+    } catch (e) {
+      console.log(e)
+      return false
+    }
+    isLoading.value = false
+    return true
+  } catch (error) {
+    console.error('Error importing devices:', error)
+    isLoading.value = false
+    return false
+  }
 }
 
 // Add device to sidebar from JSON string
