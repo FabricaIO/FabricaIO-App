@@ -16,7 +16,7 @@ export function getAutoUpdater(): AppUpdater {
   return autoUpdater
 }
 
-// needed in case process is undefined under Linux
+// Needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
