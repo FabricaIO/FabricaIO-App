@@ -135,6 +135,14 @@
               </q-item-section>
               <q-item-section>Documentation</q-item-section>
             </q-item>
+            <q-item clickable @click="autoUpdateToggle">
+              <q-item-section side class="menu-icon">
+                <q-icon :name="autoUpdateEnabled ? 'update' : 'update_disabled'" />
+              </q-item-section>
+              <q-item-section
+                >Auto Update {{ autoUpdateEnabled ? 'Enabled' : 'Disabled' }}</q-item-section
+              >
+            </q-item>
             <q-item clickable @click="checkUpdates">
               <q-item-section side class="menu-icon">
                 <q-icon name="system_update_alt" />
@@ -437,9 +445,32 @@ import { deviceTypes } from 'components/FabricaIODevice.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
 import type electronUpdater from 'electron-updater'
+import { useQuasar } from 'quasar'
+
+// Quasar object
+const $q = useQuasar()
 
 // App version ref
 const appVersion = ref('')
+
+// Startup code
+onMounted(async () => {
+  if ($q.localStorage.hasItem('updates')) {
+    console.log('Update json found')
+    const updateSettings = $q.localStorage.getItem('updates')
+    if (updateSettings !== null) {
+      const updateSettingsParsed = JSON.parse(String(updateSettings))
+      autoUpdateEnabled.value =
+        typeof updateSettingsParsed.auto === 'boolean' ? updateSettingsParsed.auto : true
+    }
+  }
+  if (autoUpdateEnabled.value) {
+    console.log('Checking for updates')
+    await window.networkops.checkForUpdates()
+  } else {
+    console.log('Auto updates disabled')
+  }
+})
 
 // Removes existing container
 const deleteContainer = async (): Promise<boolean> => {
@@ -514,6 +545,21 @@ const savePort = () => {
 
 const openDocs = () => {
   window.myWindowAPI.openExternal('https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage')
+}
+
+// Tracks if auto updates are enabled
+const autoUpdateEnabled = ref(true)
+
+// Saves auto update settings
+const autoUpdateToggle = () => {
+  autoUpdateEnabled.value = !autoUpdateEnabled.value
+  console.log('Saving update settings...')
+  try {
+    $q.localStorage.set('updates', JSON.stringify({ auto: autoUpdateEnabled.value }))
+  } catch (e) {
+    console.log(e)
+  }
+  console.log('Update settings saved.')
 }
 
 const checkUpdates = async () => {

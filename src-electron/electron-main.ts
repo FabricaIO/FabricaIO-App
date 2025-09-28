@@ -68,8 +68,6 @@ function createWindow() {
     })
   }
 
-  checkForUpdates()
-
   mainWindow.on('closed', () => {
     mainWindow = undefined
   })
