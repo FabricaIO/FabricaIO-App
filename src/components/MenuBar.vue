@@ -982,7 +982,7 @@ const buildProject = async () => {
     success = await compileWithDocker()
   }
   if (success) {
-    createDialog('Success', 'Project build successfully!')
+    createDialog('Success', 'Project built successfully!')
   } else {
     createDialog('Error', 'There was an error building the project')
   }
