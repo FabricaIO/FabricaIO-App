@@ -75,6 +75,12 @@
               </q-item-section>
               <q-item-section> Storage System: {{ current_project.storage }} </q-item-section>
             </q-item>
+            <q-item clickable v-close-popup @click="wifiDialogOpen = true">
+              <q-item-section side class="menu-icon">
+                <q-icon name="wifi" />
+              </q-item-section>
+              <q-item-section> WiFi: {{ WiFiMode }} </q-item-section>
+            </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="closeApp">
               <q-item-section side class="menu-icon">
@@ -219,6 +225,9 @@
   </q-dialog>
   <q-dialog v-model="storageDialogOpen">
     <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">Storage Settings</div>
+      </q-card-section>
       <q-radio v-model="storageSelectMode" val="FLASH" label="Use Internal Flash" />
       <q-radio v-model="storageSelectMode" val="SPI" label="Use SD Card (SPI)" />
       <q-radio v-model="storageSelectMode" val="SDIO" label="Use SD/MMC Card (SDIO)" />
@@ -429,6 +438,41 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog v-model="wifiDialogOpen" persistent>
+    <q-card style="min-width: 400px">
+      <q-card-section>
+        <div class="text-h6">WiFi Settings</div>
+      </q-card-section>
+      <q-radio v-model="WiFiMode" val="Auto" label="Automatic (dynamic config)" />
+      <q-radio v-model="WiFiMode" val="Manual" label="Manual (static config)" />
+      <q-card-section>
+        <div v-if="WiFiMode === 'Manual'" class="row q-col-gutter-sm">
+          <q-input v-model="networkName" label="WiFi Network Name" dense class="q-mt-sm" />
+          <q-input
+            v-model="wifiPassword"
+            filled
+            dense
+            class="q-mt-sm"
+            :type="isPwd ? 'password' : 'text'"
+            hint="WFi network password"
+          >
+            <template v-slot:append>
+              <q-icon
+                :name="isPwd ? 'visibility_off' : 'visibility'"
+                class="cursor-pointe"
+                dense
+                @click="isPwd = !isPwd"
+              />
+            </template>
+          </q-input>
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="OK" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -528,6 +572,12 @@ const partitionDialogOpen = ref(false)
 const storageDialogOpen = ref(false)
 const storageSelectMode = ref('FLASH')
 const storage_pins = ref<number[]>([])
+
+// WiFi dialog and options
+const wifiDialogOpen = ref(false)
+const wifiPassword = ref('')
+const networkName = ref('')
+const WiFiMode = ref('Auto')
 
 // Serial port
 const portPath = ref('')
@@ -971,9 +1021,10 @@ const buildProject = async () => {
         '[env:' + current_project.value.board + ']\nboard = ' + current_project.value.board
       success = await writePlatformIOini(current_project.value.partition, libs, board)
       if (success) {
-        success = await writeStorage(
+        success = await writeMain(
           current_project.value.storage,
           current_project.value.storage_options,
+          WiFiMode.value,
         )
       }
     }
@@ -1113,11 +1164,23 @@ const writePlatformIOini = async (
 }
 
 // Writes the storage configuration to the main.cpp file
-const writeStorage = async (storage: string, pins: number[]): Promise<boolean> => {
+const writeMain = async (storage: string, pins: number[], wifi: string): Promise<boolean> => {
   let main_text = await window.fileops.readFile(getProjectDir() + '/src/main-example.bak')
+  let fileParts
   if (storage !== 'FLASH') {
-    const fileParts = main_text.split('Storage::begin()')
+    fileParts = main_text.split('Storage::begin()')
     main_text = fileParts[0] + 'Storage::begin(' + pins.join(', ') + ')' + fileParts[1]
+  }
+  if (wifi === 'Manual') {
+    fileParts = main_text.split('// Configure WiFi client')
+    main_text =
+      fileParts[0] +
+      '// Configure WiFi client\n\t\tWiFi.begin("' +
+      networkName.value +
+      '", "' +
+      wifiPassword.value +
+      '");' +
+      fileParts[1]
   }
   return window.fileops.writeFile(getProjectDir() + '/src/main.cpp', main_text)
 }
