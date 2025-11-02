@@ -447,7 +447,7 @@
       <q-radio v-model="WiFiMode" val="Manual" label="Manual (static config)" />
       <q-card-section>
         <div v-if="WiFiMode === 'Manual'" class="row q-col-gutter-sm">
-          <q-input v-model="networkName" label="WiFi Network Name" dense class="q-mt-sm" />
+          <q-input v-model="networkName" label="WiFi network name" dense class="q-mt-sm" />
           <q-input
             v-model="wifiPassword"
             filled
