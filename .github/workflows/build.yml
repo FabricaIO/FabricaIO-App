@@ -27,7 +27,7 @@ jobs:
           node-version: 24
 
       - name: Quasar Electron Builder Action
-        uses: ShVerni/quasar_electron_build@v0.0.1
+        uses: ShVerni/quasar_electron_build@v0.0.2
         with:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
