@@ -1,6 +1,6 @@
 {
   "name": "fabricaio-app",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "App for configuring Fabrica-IO devices",
   "productName": "Fabrica-IO App",
   "author": "Sam Groveman <Groveman@fabrica-io.com>",

@@ -4,7 +4,7 @@ import os from 'os'
 import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
-import { spawn } from 'child_process'
+import { spawn, execFile } from 'child_process'
 import { SerialPort } from 'serialport'
 import AdmZip from 'adm-zip'
 import electronUpdater, { type AppUpdater } from 'electron-updater'
@@ -342,6 +342,12 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
       mainWindow?.webContents.send('build-output', `Architecture not supported \n`)
       return false
     }
+    execFile('chmod 744 ' + command, (error, stdout, stderr) => {
+      if (error) {
+        console.log(stderr)
+      }
+      console.log(stdout)
+    })
   } else if (platform === 'darwin') {
     command = path.join(resourcePath, 'esptoolmac')
   } else {
@@ -362,13 +368,13 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
   console.log(commandArgs)
   return new Promise((resolve) => {
     try {
-      const process = spawn(command, commandArgs)
+      const process = execFile(command, commandArgs)
 
-      process.stdout.on('data', (data) => {
+      process.stdout?.on('data', (data) => {
         mainWindow?.webContents.send('build-output', data.toString())
       })
 
-      process.stderr.on('data', (data) => {
+      process.stderr?.on('data', (data) => {
         mainWindow?.webContents.send('build-output', data.toString())
       })
 
