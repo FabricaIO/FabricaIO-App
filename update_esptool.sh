@@ -14,6 +14,7 @@ printf "Downloading Linux-AMD64 version...\n"
 curl -L# --output esptool.tar.gz https://github.com/espressif/esptool/releases/latest/download/esptool-${PATCH_VERSION}-linux-amd64.tar.gz
 tar -xvzf esptool.tar.gz
 cp ./esptool-linux-amd64/esptool ./public/esptool
+chmod 744 ./public/esptool
 rm esptool.tar.gz
 rm -R esptool-linux-amd64
 printf "\n"
@@ -22,6 +23,7 @@ printf "Downloading Linux-ARMv7 version...\n"
 curl -L# --output esptool.tar.gz https://github.com/espressif/esptool/releases/latest/download/esptool-${PATCH_VERSION}-linux-armv7.tar.gz
 tar -xvzf esptool.tar.gz
 cp ./esptool-linux-armv7/esptool ./public/esptoolarm
+chmod 744 ./public/esptoolarm
 rm esptool.tar.gz
 rm -R esptool-linux-armv7
 printf "\n"
@@ -30,6 +32,7 @@ printf "Downloading Linux-ARM64 version...\n"
 curl -L# --output esptool.tar.gz https://github.com/espressif/esptool/releases/latest/download/esptool-${PATCH_VERSION}-linux-aarch64.tar.gz
 tar -xvzf esptool.tar.gz
 cp ./esptool-linux-aarch64/esptool ./public/esptoolarm64
+chmod 744 ./public/esptoolarm64 
 rm esptool.tar.gz
 rm -R esptool-linux-aarch64
 printf "\n"

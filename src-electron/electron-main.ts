@@ -4,7 +4,7 @@ import os from 'os'
 import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
-import { exec, spawn } from 'child_process'
+import { spawn } from 'child_process'
 import { SerialPort } from 'serialport'
 import AdmZip from 'adm-zip'
 import electronUpdater, { type AppUpdater } from 'electron-updater'
@@ -342,7 +342,6 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
       mainWindow?.webContents.send('build-output', `Architecture not supported \n`)
       return false
     }
-    exec('chmod 744 ' + command)
   } else if (platform === 'darwin') {
     command = path.join(resourcePath, 'esptoolmac')
   } else {
@@ -355,7 +354,7 @@ ipcMain.handle('flash-firmware', async (event, data): Promise<boolean> => {
     data.port,
     '-b',
     data.baud,
-    'write_flash',
+    'write-flash',
     '0x0',
     data.projPath + 'firmware-merged.bin',
   ]
