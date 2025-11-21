@@ -27,14 +27,14 @@ jobs:
           node-version: 25
 
       - name: Quasar Electron Builder Action
-        uses: ShVerni/quasar_electron_build@v0.0.3
+        uses: ShVerni/quasar_electron_build@v0.0.4
         with:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
           github_token: ${{ secrets.GITHUB_TOKEN  }}
 
           # Always create release
-          #ars: '-p always'
+          #args: '-p always'
 
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
