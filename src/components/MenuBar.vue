@@ -187,6 +187,7 @@
           label="Choose Board"
           dense
           options-dense
+          :menu-offset="[0, -45]"
           class="q-mt-sm"
         />
         <q-radio v-model="boardSelectMode" val="custom" label="Enter custom board" />
@@ -325,6 +326,7 @@
           label="Choose Port"
           dense
           options-dense
+          :menu-offset="[0, -45]"
           class="q-mt-sm"
         />
         <q-radio v-model="portSelectMode" val="advanced" label="Enter Port (advanced)" />
