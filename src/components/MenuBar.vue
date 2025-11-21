@@ -449,7 +449,7 @@
       <q-radio v-model="WiFiMode" val="Manual" label="Client (static config)" />
       <q-radio v-model="WiFiMode" val="AP" label="Access Point (static config)" />
       <q-card-section>
-        <div v-if="WiFiMode === 'Manual'" class="row q-col-gutter-sm">
+        <div v-if="WiFiMode === 'Manual' || WiFiMode === 'AP'" class="row q-col-gutter-sm">
           <q-input v-model="networkName" label="WiFi network name" dense class="q-mt-sm" />
           <q-input
             v-model="wifiPassword"
@@ -1192,7 +1192,13 @@ const writeMain = async (storage: string, pins: number[], wifi: string): Promise
     fileParts = main_text.split('// Pre-configure WiFi')
     main_text =
       fileParts[0] +
-      '// Pre-configure WiFi\n\tConfiguration::currentConfig.WiFiClient = false;' +
+      '// Pre-configure WiFi\n\tConfiguration::currentConfig.WiFiClient = false;\n\t' +
+      'Configuration::currentConfig.configSSID = "' +
+      networkName.value +
+      '";\n\t' +
+      'Configuration::currentConfig.configPW = "' +
+      wifiPassword.value +
+      '";' +
       fileParts[1]
   }
   return window.fileops.writeFile(getProjectDir() + '/src/main.cpp', main_text)
