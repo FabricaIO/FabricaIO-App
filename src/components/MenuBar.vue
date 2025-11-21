@@ -439,12 +439,13 @@
     </q-card>
   </q-dialog>
   <q-dialog v-model="wifiDialogOpen" persistent>
-    <q-card style="min-width: 400px">
+    <q-card style="min-width: 625px">
       <q-card-section>
         <div class="text-h6">WiFi Settings</div>
       </q-card-section>
       <q-radio v-model="WiFiMode" val="Auto" label="Automatic (dynamic config)" />
-      <q-radio v-model="WiFiMode" val="Manual" label="Manual (static config)" />
+      <q-radio v-model="WiFiMode" val="Manual" label="Client (static config)" />
+      <q-radio v-model="WiFiMode" val="AP" label="Access Point (static config)" />
       <q-card-section>
         <div v-if="WiFiMode === 'Manual'" class="row q-col-gutter-sm">
           <q-input v-model="networkName" label="WiFi network name" dense class="q-mt-sm" />
@@ -550,6 +551,10 @@ const boards = ref([
   {
     name: 'adafruit_qtpy_esp32c3',
     label: 'Adafruit QT Py ESP32-C3',
+  },
+  {
+    name: 'esp32dev',
+    label: 'ESP32 Dev (generic)',
   },
 ])
 
@@ -1180,6 +1185,12 @@ const writeMain = async (storage: string, pins: number[], wifi: string): Promise
       '", "' +
       wifiPassword.value +
       '");' +
+      fileParts[1]
+  } else if (wifi === 'AP') {
+    fileParts = main_text.split('// Pre-configure WiFi')
+    main_text =
+      fileParts[0] +
+      '// Pre-configure WiFi\n\tConfiguration::currentConfig.WiFiClient = false;' +
       fileParts[1]
   }
   return window.fileops.writeFile(getProjectDir() + '/src/main.cpp', main_text)

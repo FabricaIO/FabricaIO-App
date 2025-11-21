@@ -191,7 +191,8 @@ const filteredDevices = computed(() => {
     filtered = filtered.filter(
       (device) =>
         device.name.toLowerCase().includes(searchTerm) ||
-        device.description.toLowerCase().includes(searchTerm),
+        device.description.toLowerCase().includes(searchTerm) ||
+        device.libname.toLowerCase().includes(searchTerm),
     )
   }
 
