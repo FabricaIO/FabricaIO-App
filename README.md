@@ -2,6 +2,9 @@
 
 This app is used to setup and configure you Fabrica-IO project. For details on installing and using app, please refer to the [wiki](https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage).
 
+> [!CAUTION]
+> This app is currently in very early development. It is unoptimized, unrefined, and subject to frequent and potentially breaking changes. There is no input validation, so this app should be used with caution.
+
 ## Installation
 
 Follow the [setup instructions](https://github.com/FabricaIO/FabricaIO-App/wiki/App-Usage#setup) to install the app. If you'd like to contribute as a developer, or build from source, see the instructions below.
