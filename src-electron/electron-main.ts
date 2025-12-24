@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 import { initialize, enable } from '@electron/remote/main/index.js'
 import fs from 'fs/promises'
 import { spawn, execFile } from 'child_process'
-import { SerialPort } from 'serialport'
+import { SerialPort, ReadlineParser } from 'serialport'
 import AdmZip from 'adm-zip'
 import electronUpdater, { type AppUpdater } from 'electron-updater'
 
@@ -25,6 +25,46 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 let mainWindow: BrowserWindow | undefined
 
 initialize()
+
+// Serial port management
+let serialport: SerialPort | null = null
+let parser: ReadlineParser | null = null
+
+// Close and cleanup serial port
+const closeSerialPort = async (): Promise<void> => {
+  return new Promise((resolve) => {
+    if (parser) {
+      parser.removeAllListeners('data')
+      parser.removeAllListeners('error')
+      parser.destroy()
+      parser = null
+    }
+
+    if (serialport) {
+      serialport.removeAllListeners('open')
+      serialport.removeAllListeners('error')
+      if (serialport.isOpen) {
+        serialport.close((err) => {
+          if (err) {
+            console.error('Error closing port:', err)
+          }
+          console.log('Serial port closed event fired')
+          if (serialport) {
+            serialport.destroy()
+          }
+          serialport = null
+          resolve()
+        })
+      } else {
+        serialport.destroy()
+        serialport = null
+        resolve()
+      }
+    } else {
+      resolve()
+    }
+  })
+}
 
 function createWindow() {
   // process.env.PATH += ':/run/host/usr/bin' // Possible Flatpak fix not currently in use
@@ -317,6 +357,79 @@ ipcMain.handle('get-serial-ports', async () => {
   } catch (error) {
     console.error('Error listing serial ports:', error)
     return []
+  }
+})
+
+// IPC handler to open serial port and start monitoring
+ipcMain.handle('serial:open', async (event, { path: portPath, baudRate }) => {
+  try {
+    // Close any existing port
+    await closeSerialPort()
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Create new port with autoOpen disabled for manual control
+    serialport = new SerialPort({
+      path: portPath,
+      baudRate: baudRate || 115200,
+      autoOpen: false,
+    })
+
+    // Create parser for line-based data (one event per line)
+    parser = new ReadlineParser({ delimiter: '\n' })
+
+    // Register all event handlers before piping and opening the port
+    serialport.once('open', () => {
+      console.log('Serial port opened event fired')
+      mainWindow?.webContents.send('serial:opened')
+    })
+
+    serialport.on('error', (error) => {
+      console.error('Serial port error event:', error.message)
+      mainWindow?.webContents.send('serial:error', error.message)
+    })
+
+    // Parser data handler - fires for each complete line (delimiter = '\n')
+    parser.on('data', (line: string) => {
+      console.log('Parser received line:', line)
+      mainWindow?.webContents.send('serial:data', line)
+    })
+
+    parser.on('error', (error) => {
+      console.error('Parser error event:', error.message)
+      mainWindow?.webContents.send('serial:error', `Parser error: ${error.message}`)
+    })
+
+    // Pipe port to parser for later use if needed
+    console.log('Piping serialport to parser')
+    serialport.pipe(parser)
+
+    // Finally open the port
+    console.log('Opening serial port:', portPath)
+    serialport.open((err) => {
+      if (err) {
+        console.error('Failed to open port:', err.message)
+        mainWindow?.webContents.send('serial:error', err.message)
+      } else {
+        console.log('Serial port opened successfully')
+      }
+    })
+
+    return true
+  } catch (error) {
+    console.error('Error in serial:open:', error)
+    await closeSerialPort()
+    return false
+  }
+})
+
+// IPC handler to close serial port
+ipcMain.handle('serial:close', async () => {
+  try {
+    await closeSerialPort()
+    return true
+  } catch (error) {
+    console.error('Error closing serial port:', error)
+    return false
   }
 })
 

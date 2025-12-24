@@ -108,6 +108,12 @@
               </q-item-section>
               <q-item-section> Upload Firmware </q-item-section>
             </q-item>
+            <q-item clickable v-close-popup @click="monitorSerialPort">
+              <q-item-section side class="menu-icon">
+                <q-icon name="terminal" />
+              </q-item-section>
+              <q-item-section>Monitor Serial Output</q-item-section>
+            </q-item>
             <q-separator />
             <q-item clickable v-close-popup @click="setOTADevice">
               <q-item-section side class="menu-icon">
@@ -360,7 +366,13 @@
         <pre id="build-output"></pre>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat label="OK" :disable="buildInProgress" color="primary" v-close-popup />
+        <q-btn
+          flat
+          label="OK"
+          :disable="buildInProgress || monitoring"
+          color="primary"
+          v-close-popup
+        />
         <q-btn flat label="Cancel" @click="cancelBuild" color="primary" />
       </q-card-actions>
     </q-card>
@@ -493,6 +505,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Dialog } from 'quasar'
 import type electronUpdater from 'electron-updater'
 import { useQuasar } from 'quasar'
+import { nextTick } from 'vue'
 
 // Quasar object
 const $q = useQuasar()
@@ -683,6 +696,90 @@ const uploadFirmware = async () => {
 const getPortLabel = (portPath: string): string => {
   if (!portPath) return 'Select a port'
   return portOptions.value.find((port) => port.value === portPath)?.label || portPath
+}
+
+// Serial monitoring variables
+const monitoring = ref(false)
+
+// Monitors serial port
+const monitorSerialPort = async () => {
+  if (monitoring.value || buildInProgress.value) {
+    return
+  }
+
+  if (portPath.value === '') {
+    createDialog('Error', 'No serial port selected')
+    return
+  }
+
+  monitoring.value = true
+  buildDialogOpen.value = true
+  await nextTick()
+  const outputElement = document.getElementById('build-output')
+
+  if (outputElement) {
+    outputElement.textContent = `Opening serial port: ${selectedPort.value?.label || 'Unknown'}\n`
+  }
+
+  try {
+    // Register event handlers before opening
+    window.serialAPI.onOpened(() => {
+      if (outputElement) {
+        outputElement.textContent += 'Serial port opened successfully. Monitoring...\n'
+      }
+    })
+
+    window.serialAPI.onData((line: string) => {
+      const outputElement = document.getElementById('build-output')
+      if (outputElement) {
+        outputElement.textContent += line + '\n'
+        outputElement.scrollTop = outputElement.scrollHeight
+      }
+    })
+
+    window.serialAPI.onError((error: string) => {
+      if (outputElement) {
+        outputElement.textContent += `Error: ${error}\n`
+      }
+      monitoring.value = false
+    })
+
+    window.serialAPI.onClosed(() => {
+      if (outputElement) {
+        outputElement.textContent += 'Serial port closed.\n'
+      }
+      monitoring.value = false
+    })
+
+    // Open the port
+    const baud = portSelectMode.value === 'advanced' ? parseInt(serialBaud.value) || 115200 : 115200
+    const success = await window.serialAPI.openPort(selectedPort.value?.value || '', baud)
+
+    if (!success) {
+      if (outputElement) {
+        outputElement.textContent += 'Failed to open serial port\n'
+      }
+      monitoring.value = false
+    }
+  } catch (error) {
+    if (outputElement) {
+      outputElement.textContent += `Error: ${error instanceof Error ? error.message : 'Unknown error'}\n`
+    }
+    monitoring.value = false
+  }
+}
+
+// Stops monitoring the serial port
+const stopMonitoringSerialPort = async () => {
+  // Remove any old listeners from previous sessions
+  window.serialAPI.removeListeners?.()
+  try {
+    await window.serialAPI.closePort()
+    monitoring.value = false
+  } catch (error) {
+    console.error('Error closing serial port:', error)
+    monitoring.value = false
+  }
 }
 
 // OTA variables
@@ -1206,7 +1303,7 @@ const writeMain = async (storage: string, pins: number[], wifi: string): Promise
 
 // Builds (compiles) project with PlatformIO docker container
 const compileWithDocker = async (): Promise<boolean> => {
-  if (!buildInProgress.value) {
+  if (!buildInProgress.value && !monitoring.value) {
     buildInProgress.value = true
     buildDialogOpen.value = true
     const command = 'docker'
@@ -1277,6 +1374,9 @@ const cancelBuild = async () => {
     if (success) {
       buildInProgress.value = false
     }
+  } else if (monitoring.value) {
+    stopMonitoringSerialPort()
+    buildDialogOpen.value = false
   } else {
     buildDialogOpen.value = false
   }
@@ -1284,7 +1384,7 @@ const cancelBuild = async () => {
 
 // Flashes firmware through serial
 const flashFirmware = async (): Promise<boolean> => {
-  if (!buildInProgress.value) {
+  if (!buildInProgress.value && !monitoring.value) {
     buildInProgress.value = true
     buildDialogOpen.value = true
     const dirChar = window.shell.platform === 'win32' ? '\\' : '/'

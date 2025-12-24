@@ -123,3 +123,35 @@ contextBridge.exposeInMainWorld('myWindowAPI', {
   },
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 })
+
+// Serial port monitoring API
+contextBridge.exposeInMainWorld('serialAPI', {
+  // Command handlers (promise-based)
+  openPort: (path: string, baudRate: number): Promise<boolean> =>
+    ipcRenderer.invoke('serial:open', { path, baudRate }),
+
+  closePort: (): Promise<boolean> => ipcRenderer.invoke('serial:close'),
+
+  // Event listeners (register persistent callbacks)
+  onOpened: (callback: () => void) => {
+    ipcRenderer.on('serial:opened', callback)
+  },
+
+  onData: (callback: (line: string) => void) => {
+    ipcRenderer.on('serial:data', (_event, line) => callback(line))
+  },
+
+  onError: (callback: (error: string) => void) => {
+    ipcRenderer.on('serial:error', (_event, error) => callback(error))
+  },
+
+  onClosed: (callback: () => void) => {
+    ipcRenderer.on('serial:closed', callback)
+  },
+  removeListeners: () => {
+    ipcRenderer.removeAllListeners('serial:opened')
+    ipcRenderer.removeAllListeners('serial:data')
+    ipcRenderer.removeAllListeners('serial:error')
+    ipcRenderer.removeAllListeners('serial:closed')
+  },
+})

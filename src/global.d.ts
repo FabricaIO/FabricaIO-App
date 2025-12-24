@@ -58,5 +58,15 @@ declare global {
       >
       flashFirmware: (data: { port: string; baud: string; projPath: string }) => Promise<boolean>
     }
+    serialAPI: {
+      openPort: (path: string, baudRate: number) => Promise<boolean>
+      closePort: () => Promise<boolean>
+      onOpened: (callback: () => void) => void
+      onData: (callback: (line: string) => void) => void
+      onError: (callback: (error: string) => void) => void
+      onClosed: (callback: () => void) => void
+      removeAllListeners: () => Promise<boolean>
+      removeListeners: () => void
+    }
   }
 }
