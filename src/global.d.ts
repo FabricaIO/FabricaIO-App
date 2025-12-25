@@ -65,7 +65,6 @@ declare global {
       onData: (callback: (line: string) => void) => void
       onError: (callback: (error: string) => void) => void
       onClosed: (callback: () => void) => void
-      removeAllListeners: () => Promise<boolean>
       removeListeners: () => void
     }
   }

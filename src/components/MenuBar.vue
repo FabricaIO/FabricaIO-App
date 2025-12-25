@@ -501,7 +501,7 @@ import {
 import 'components/FabricaIODevice.vue'
 import type { FabricaIODeviceProps } from 'components/FabricaIODevice.vue'
 import { deviceTypes } from 'components/FabricaIODevice.vue'
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Dialog } from 'quasar'
 import type electronUpdater from 'electron-updater'
 import { useQuasar } from 'quasar'
@@ -1430,11 +1430,6 @@ onMounted(async () => {
       outputElement.scrollTop = outputElement.scrollHeight
     }
   })
-})
-
-onUnmounted(() => {
-  // Clean up the event handler
-  window.shell.removeAllListeners('build-output')
 })
 </script>
 
