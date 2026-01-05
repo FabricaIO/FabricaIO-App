@@ -1312,8 +1312,8 @@ const compileWithDocker = async (): Promise<boolean> => {
     if (!success) {
       buildDialogOpen.value = false
       createDialog(
-        'Docker Missing',
-        'Docker not installed. Please ensure Docker is properly installed accessible before building. For Linux, check if your user need to be in the Docker group.',
+        'Error',
+        'Docker not installed. Please ensure Docker is properly installed accessible before building. For Linux, check if your user needs to be in the Docker group.',
       )
       buildInProgress.value = false
       return false
