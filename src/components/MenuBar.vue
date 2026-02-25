@@ -1172,7 +1172,7 @@ const buildConstructors = (device: FabricaIODeviceProps): string => {
 
 // Builds the loader string for a sensor or actor device
 const buildDeviceLoaders = (device: FabricaIODeviceProps): string => {
-  const device_name = device.name.replace(' ', '')
+  const device_name = device.name.replaceAll(' ', '')
   switch (device.type) {
     case deviceTypes.Actor:
       return 'ActorManager::addActor(&' + device_name + ');'
@@ -1184,7 +1184,7 @@ const buildDeviceLoaders = (device: FabricaIODeviceProps): string => {
 
 // Builds the loader string for a LogReceiver or EventReceiver device
 const buildReceiverLoaders = (device: FabricaIODeviceProps): string => {
-  const device_name = device.name.replace(' ', '')
+  const device_name = device.name.replaceAll(' ', '')
   switch (device.type) {
     case deviceTypes.LogReceiver:
       return 'Logger.addReceiver(&' + device_name + ');'

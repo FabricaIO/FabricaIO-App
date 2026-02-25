@@ -193,7 +193,7 @@ export default defineConfig((/* ctx */) => {
       },
 
       builder: {
-        // https://www.electron.build/configuration/configuration
+        // https://www.electron.build/configuration
         appId: 'com.fabrica-io.fabrica-io-app',
         asarUnpack: ['*esptool*'],
         mac: {
@@ -265,7 +265,6 @@ export default defineConfig((/* ctx */) => {
               arch: ['x64'],
             },
           ],
-          publisherName: 'Fabrica-IO',
           forceCodeSigning: false,
           verifyUpdateCodeSignature: false,
           publish: ['github'],
